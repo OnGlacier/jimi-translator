@@ -112,6 +112,22 @@ pm grant com.rltranslator.overlay android.permission.WRITE_SECURE_SETTINGS
 
 ---
 
+## 桌面版（Windows / Linux）
+
+同一套翻译逻辑也有桌面版：纯 Java 17 + Swing，零依赖，一个 jar 就能跑。
+
+```bash
+cd desktop
+./build.sh && ./run.sh        # Windows 用 build.bat / run.bat
+```
+
+和手机版一样：框选、自动跟读、双向 / 英译中 / 中译英、流式输出、去重、猫猫圆钮。
+桌面端用 `java.awt.Robot` 截屏、无边框置顶窗口显示译文，**不需要无障碍服务**（也就没有「权限被系统关掉」的问题）。
+
+细节与平台备注（Wayland 需要 XWayland 或屏幕录制门户授权）见 [desktop/README.md](desktop/README.md)。
+
+---
+
 ## 配置项
 
 | 设置 | 默认 | 说明 |

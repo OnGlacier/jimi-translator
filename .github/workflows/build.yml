@@ -7,6 +7,23 @@ on:
   pull_request:
 
 jobs:
+  desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Build desktop jar
+        run: bash desktop/build.sh
+      - name: Selftest
+        run: java -jar desktop/build/jimi-translator.jar --selftest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jimi-translator-desktop
+          path: desktop/build/jimi-translator.jar
+
   build:
     runs-on: ubuntu-latest
     permissions:
