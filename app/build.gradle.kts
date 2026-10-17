@@ -41,5 +41,8 @@ android {
     }
 }
 
-// 没有任何第三方依赖：整个 APK 约 60 KB。
-dependencies {}
+dependencies {
+    // 仅用于「一键授权」：通过 Shizuku 以 shell 身份执行 pm grant
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
+}
