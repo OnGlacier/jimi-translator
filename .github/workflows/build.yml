@@ -9,6 +9,8 @@ on:
 jobs:
   desktop:
     runs-on: ubuntu-latest
+    # 等 build 先把 Release 建好，避免两个 job 同时创建同一个 Release
+    needs: build
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
