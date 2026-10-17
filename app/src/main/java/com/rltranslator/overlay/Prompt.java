@@ -7,7 +7,8 @@ final class Prompt {
     private Prompt() {}
 
     static final String DEFAULT_SYSTEM =
-        "你是英文学术论文（强化学习 / 机器人方向）的翻译引擎。你只输出 JSON，绝不输出分析、计划或解释。";
+        "你是专业的英文学术文献翻译引擎：理工科论文（强化学习、机器人、控制、计算机视觉、"
+            + "生物医学等方向）都能准确翻译。你只输出 JSON，绝不输出分析、计划或解释。";
 
     static final String REPAIR =
         "你上一条回复是分析，不合格。不要分析、不要解释、不要列提纲。"
@@ -31,7 +32,7 @@ final class Prompt {
         sb.append("3) 与下面「已翻译」重复的半句一律不要；没有新内容就输出 {\"segments\":[]}；\n");
         sb.append("4) 这一屏有多少段就输出多少段（通常 20–40 条），绝对不要只翻一部分；宁可拆细也别漏；en 只放对应那一句英文原文；zh 不超过 240 字；\n");
         sb.append("5) 译文里不要出现 $ 或 \\ 开头的 LaTeX 标记，公式写成普通字符（例如 μθ(·|s)、Δt_i=t_{i+1}-t_i）；\n");
-        sb.append("6) 翻译要书面、忠实、不扩写。术语：policy 策略、value function 价值函数、policy gradient 策略梯度、");
+        sb.append("6) 翻译要书面、忠实、不扩写，按原文所属学科使用规范译名。常见术语（出现则优先采用）：policy 策略、value function 价值函数、policy gradient 策略梯度、");
         sb.append("actor-critic 演员-评论家、reward 奖励、return 回报、discount factor 折扣因子、trajectory 轨迹、");
         sb.append("on-policy 同策略、off-policy 异策略、advantage 优势、entropy 熵、sample efficiency 样本效率、");
         sb.append("exploration 探索、manipulation 操作、locomotion 运动控制、generalization 泛化、ablation 消融。\n\n");

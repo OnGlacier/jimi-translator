@@ -10,8 +10,8 @@ android {
         applicationId = "com.rltranslator.overlay"
         minSdk = 30
         targetSdk = 35
-        versionCode = 26
-        versionName = "1.26"
+        versionCode = 27
+        versionName = "1.27"
     }
 
     // 签名走环境变量，避免把 keystore 提交进仓库：
