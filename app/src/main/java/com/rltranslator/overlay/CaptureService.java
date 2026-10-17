@@ -46,6 +46,11 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
         super.onServiceConnected();
         instance = this;
         try {
+            startKeepAlive();
+        } catch (Throwable error) {
+            android.util.Log.w("JimiTranslator", "foreground start failed", error);
+        }
+        try {
             dedupe.load(this);
             overlay = new Overlay(this, this, dedupe);
             overlay.show();
@@ -56,6 +61,44 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
         } catch (Throwable error) {
             // 宁可少一个浮窗，也不能让服务崩溃——崩溃多了系统会直接把这个无障碍服务关掉
             android.util.Log.e("JimiTranslator", "onServiceConnected failed", error);
+        }
+    }
+
+    private static final String CHANNEL_ID = "jimi_running";
+    private static final int NOTIFICATION_ID = 0x6A6D;
+
+    /** 常驻通知 + 前台服务：ColorOS 清理后台时，前台进程比普通进程难杀得多。 */
+    private void startKeepAlive() {
+        android.app.NotificationManager manager =
+            (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (manager == null) return;
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            android.app.NotificationChannel channel = new android.app.NotificationChannel(
+                CHANNEL_ID, "读屏运行状态", android.app.NotificationManager.IMPORTANCE_LOW);
+            channel.setDescription("保持读屏服务运行，避免被系统清理");
+            channel.setShowBadge(false);
+            manager.createNotificationChannel(channel);
+        }
+        android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
+        int flags = android.os.Build.VERSION.SDK_INT >= 23
+            ? android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE
+            : android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+        android.app.PendingIntent pending = android.app.PendingIntent.getActivity(this, 0, intent, flags);
+
+        android.app.Notification notification = new android.app.Notification.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("基米翻译正在读屏")
+            .setContentText("点这里可以调整设置；服务运行中，不会被系统当作后台应用清理")
+            .setOngoing(true)
+            .setContentIntent(pending)
+            .build();
+        startForeground(NOTIFICATION_ID, notification);
+    }
+
+    private void stopKeepAlive() {
+        try {
+            stopForeground(true);
+        } catch (Throwable ignored) {
         }
     }
 
@@ -85,6 +128,7 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
             handler.removeCallbacksAndMessages(null);
             if (overlay != null) overlay.hide();
             io.shutdownNow();
+            stopKeepAlive();
         } catch (Throwable ignored) {
         }
         super.onDestroy();

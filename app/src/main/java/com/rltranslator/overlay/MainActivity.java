@@ -376,6 +376,21 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        // Android 13+ 需要通知权限，常驻通知才看得见（读屏服务的前台状态依赖它）
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            try {
+                if (checkSelfPermission("android.permission.POST_NOTIFICATIONS")
+                        != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[] {"android.permission.POST_NOTIFICATIONS"}, 7);
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         // ColorOS 这类 ROM 会把第三方无障碍服务关掉；拿到一次性授权后这里自动恢复
