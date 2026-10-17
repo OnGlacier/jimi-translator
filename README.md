@@ -119,7 +119,7 @@ pm grant com.rltranslator.overlay android.permission.WRITE_SECURE_SETTINGS
 | 平台 | 安装包 | 说明 |
 |---|---|---|
 | Windows | `jimi-translator-<版本>-windows.exe` | 双击安装，自带 Java 运行时；未签名，SmartScreen 提示点「仍要运行」 |
-| Linux | `jimi-translator_<版本>-1_amd64.deb` | `sudo apt install ./xxx.deb`（在 Ubuntu 24.04 上构建） |
+| Linux | `jimi-translator_<版本>-1_amd64.deb` | `sudo apt install ./xxx.deb`（兼容 Ubuntu 22.04 及更新版本） |
 | 任意（需 Java 17+） | `jimi-translator-desktop-<版本>.jar` | `java -jar xxx.jar` |
 
 都在 [Releases](https://github.com/OnGlacier/jimi-translator/releases) 里。

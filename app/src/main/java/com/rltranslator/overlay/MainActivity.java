@@ -179,7 +179,13 @@ public class MainActivity extends Activity {
         title.getPaint().setFakeBoldText(true);
         titleBox.addView(title);
         TextView subtitle = new TextView(this);
-        subtitle.setText("看屏幕 · 只翻新内容 · 英中双向");
+        String versionName = "";
+        try {
+            versionName = " · v" + getPackageManager()
+                .getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Throwable ignored) {
+        }
+        subtitle.setText("看屏幕 · 只翻新内容 · 英中双向" + versionName);
         subtitle.setTextSize(12.5f);
         subtitle.setTextColor(INK_SOFT);
         titleBox.addView(subtitle);

@@ -2,6 +2,16 @@
 
 遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [1.45] - 2026-10-17
+
+### 修复
+- **Linux deb 兼容 Ubuntu 22.04**：之前在 ubuntu-24.04 上构建，deb 里打包的 Java 运行时依赖 glibc 2.39，
+  在 22.04（glibc 2.35）上启动就报 `GLIBC_2.38 not found`。现在改用 **ubuntu-22.04 运行器**构建，
+  Ubuntu 22.04 / 24.04、Debian 12+ 均可安装运行。
+
+### 新增（Android）
+- 设置页副标题显示版本号（`v1.45`），不用拆 APK 也能确认装的是哪一版。
+
 ## [1.44] - 2026-10-17
 
 ### 新增（Android）
