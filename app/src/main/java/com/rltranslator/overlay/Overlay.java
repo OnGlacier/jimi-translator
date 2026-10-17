@@ -47,6 +47,11 @@ final class Overlay {
     /** 0=透明 1=半透明；默认半透明，别挡论文。 */
     private int alphaPct = 70;
     private boolean catTheme;
+    private boolean fullscreen;
+    private int restoreW;
+    private int restoreH;
+    private int restoreX;
+    private int restoreY;
     private TextView directionChip;
     /** 显示原文：译文上方显示对应的原句。 */
     private boolean bilingual = true;
@@ -227,9 +232,12 @@ final class Overlay {
         TextView moreChip = chip("不透明度", false, v -> moreRow.setVisibility(
             moreRow.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
 
+        // 全屏 / 还原
+        TextView fullChip = chip("⛶", false, v -> toggleFullscreen());
+
         header.addView(title);
         header.addView(statusView);
-        header.addView(moreChip, chipMargin());
+        header.addView(fullChip, chipMargin());
         card.addView(header);
 
         // 第二行：框选 / 自动 / 方向（双向·英译中·中译英）/ 清空 / 收起
@@ -239,6 +247,7 @@ final class Overlay {
         actionRow.addView(regionChip);
         actionRow.addView(autoChip, chipMargin());
         actionRow.addView(directionChip, chipMargin());
+        actionRow.addView(moreChip, chipMargin());
         actionRow.addView(clearChip, chipMargin());
         actionRow.addView(closeChip, chipMargin());
         card.addView(actionRow);
@@ -253,7 +262,7 @@ final class Overlay {
 
         scroll = new ScrollView(ctx);
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(190));
+            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
         scrollParams.topMargin = dp(6);
         scroll.setLayoutParams(scrollParams);
         scroll.setVerticalScrollBarEnabled(false);
@@ -271,6 +280,50 @@ final class Overlay {
         statsView.setPadding(0, dp(6), 0, 0);
         statsView.setText("点「框选」圈一块翻；「自动」每 8 秒看一次");
         card.addView(statsView);
+
+        // 右下角缩放柄：拖它改卡片大小
+        TextView resizeGrip = new TextView(ctx);
+        resizeGrip.setText("◢");
+        resizeGrip.setTextSize(13f);
+        resizeGrip.setTextColor(0x66FFFFFF);
+        resizeGrip.setGravity(Gravity.END);
+        resizeGrip.setPadding(0, 0, dp(2), 0);
+        LinearLayout.LayoutParams gripParams = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        card.addView(resizeGrip, gripParams);
+        resizeGrip.setOnTouchListener(new View.OnTouchListener() {
+            float downX;
+            float downY;
+            int startW;
+            int startH;
+
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        downX = event.getRawX();
+                        downY = event.getRawY();
+                        startW = params.width;
+                        startH = params.height;
+                        return true;
+                    case MotionEvent.ACTION_MOVE: {
+                        int screenW = ctx.getResources().getDisplayMetrics().widthPixels;
+                        int screenH = ctx.getResources().getDisplayMetrics().heightPixels;
+                        params.width = Math.max(dp(240), Math.min(screenW, startW + (int) (event.getRawX() - downX)));
+                        params.height = Math.max(dp(200), Math.min(screenH, startH + (int) (event.getRawY() - downY)));
+                        fullscreen = false;
+                        wm.updateViewLayout(card, params);
+                        return true;
+                    }
+                    case MotionEvent.ACTION_UP:
+                        Store.putInt(ctx, "cardW", params.width);
+                        Store.putInt(ctx, "cardH", params.height);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        });
 
         // 拖动
         header.setOnTouchListener(new View.OnTouchListener() {
@@ -305,10 +358,16 @@ final class Overlay {
         });
 
         int screenWidth = ctx.getResources().getDisplayMetrics().widthPixels;
+        int screenHeight = ctx.getResources().getDisplayMetrics().heightPixels;
         int width = Math.min((int) (screenWidth * 0.88f), dp(430));
+        int height = Math.min(dp(320), (int) (screenHeight * 0.7f));
+        int savedW = Store.getInt(ctx, "cardW", 0);
+        int savedH = Store.getInt(ctx, "cardH", 0);
+        if (savedW > 0) width = Math.min(savedW, screenWidth);
+        if (savedH > 0) height = Math.min(savedH, screenHeight);
         params = new WindowManager.LayoutParams(
             width,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            height,
             Build.VERSION.SDK_INT >= 22
                 ? WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
                 : WindowManager.LayoutParams.TYPE_PHONE,
@@ -351,6 +410,34 @@ final class Overlay {
         }
         attached = false;
         collapsed = false;
+    }
+
+    /** 全屏 / 还原：把卡片铺满屏幕，再点回到原来的大小和位置。 */
+    void toggleFullscreen() {
+        if (params == null || !attached) return;
+        int screenW = ctx.getResources().getDisplayMetrics().widthPixels;
+        int screenH = ctx.getResources().getDisplayMetrics().heightPixels;
+        if (!fullscreen) {
+            restoreW = params.width;
+            restoreH = params.height;
+            restoreX = params.x;
+            restoreY = params.y;
+            params.width = screenW;
+            params.height = screenH;
+            params.x = 0;
+            params.y = 0;
+            fullscreen = true;
+        } else {
+            params.width = restoreW;
+            params.height = restoreH;
+            params.x = restoreX;
+            params.y = restoreY;
+            fullscreen = false;
+        }
+        try {
+            wm.updateViewLayout(card, params);
+        } catch (Throwable ignored) {
+        }
     }
 
     /** 折叠成一颗小圆钮，不挡论文。 */
