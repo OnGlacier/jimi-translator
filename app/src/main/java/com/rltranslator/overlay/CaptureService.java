@@ -166,7 +166,7 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
     public void onDirectionChanged(String direction) {
         if (overlay == null) return;
         overlay.setStatus("方向：" + ("en2zh".equals(direction) ? "英译中"
-            : ("zh2en".equals(direction) ? "中译英" : "自动")));
+            : ("zh2en".equals(direction) ? "中译英" : "双向")));
         if ("zh2en".equals(direction) && Dedupe.normalize("").isEmpty()) {
             // 方向切换后旧记录仍按原文去重，不需要清空
         }

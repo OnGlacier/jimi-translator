@@ -76,7 +76,7 @@ final class Overlay {
     private static String directionLabel(String direction) {
         if ("en2zh".equals(direction)) return "英译中";
         if ("zh2en".equals(direction)) return "中译英";
-        return "自动";
+        return "双向";
     }
 
     private int accent() {
@@ -143,7 +143,7 @@ final class Overlay {
         statusView.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
         TextView regionChip = chip("框选", true, v -> host.onPickRegion());
-        autoChip = chip("跟读", false, v -> host.onToggleAuto());
+        autoChip = chip("自动", false, v -> host.onToggleAuto());
 
         // 翻译方向：点一下在「自动 → 英译中 → 中译英」之间循环，按钮上直接显示当前方向
         directionChip = chip(directionLabel(Store.get(ctx, Store.KEY_DIRECTION, "auto")), false, v -> {
@@ -232,7 +232,7 @@ final class Overlay {
         header.addView(moreChip, chipMargin());
         card.addView(header);
 
-        // 第二行：框选 / 跟读 / 翻译方向 / 清空 / 收起
+        // 第二行：框选 / 自动 / 方向（双向·英译中·中译英）/ 清空 / 收起
         LinearLayout actionRow = new LinearLayout(ctx);
         actionRow.setOrientation(LinearLayout.HORIZONTAL);
         actionRow.setPadding(0, dp(7), 0, 0);
@@ -511,7 +511,7 @@ final class Overlay {
     void setAuto(boolean enabled) {
         auto = enabled;
         if (autoChip != null) {
-            autoChip.setText(enabled ? "跟读·开" : "跟读");
+            autoChip.setText(enabled ? "自动·开" : "自动");
             autoChip.setBackground(round(enabled ? accent() : 0x332A333F, 9));
             autoChip.setTextColor(enabled ? 0xFFFFFFFF : 0xFFE6EDF3);
         }

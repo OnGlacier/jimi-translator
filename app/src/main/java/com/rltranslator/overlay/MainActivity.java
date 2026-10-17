@@ -234,7 +234,7 @@ public class MainActivity extends Activity {
         dirIndex = "en2zh".equals(savedDir) ? 1 : ("zh2en".equals(savedDir) ? 2 : 0);
         LinearLayout dirRow = new LinearLayout(this);
         dirRow.setOrientation(LinearLayout.HORIZONTAL);
-        String[] dirLabels = {"自动", "英译中", "中译英"};
+        String[] dirLabels = {"双向", "英译中", "中译英"};
         for (int i = 0; i < dirLabels.length; i++) {
             final int index = i;
             Button item = new Button(this);
@@ -378,6 +378,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        GuardService.start(this);
         // Android 13+ 需要通知权限，常驻通知才看得见（读屏服务的前台状态依赖它）
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             try {
