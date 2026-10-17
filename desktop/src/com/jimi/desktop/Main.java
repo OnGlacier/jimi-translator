@@ -10,6 +10,7 @@ public final class Main {
     private Main() {}
 
     public static void main(String[] args) throws Exception {
+        installCrashHandler();
         List<String> arguments = Arrays.asList(args);
         if (arguments.contains("--selftest")) {
             selfTest();
@@ -29,6 +30,26 @@ public final class Main {
             Settings.error("第一次使用：先填 API key，再点「保存设置」。");
         }
         Settings.run(config);
+    }
+
+    /** 未捕获异常写进 ~/.jimi-translator/crash.log，方便用户把日志发回来定位。 */
+    private static void installCrashHandler() {
+        Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+            try {
+                java.nio.file.Path dir = Config.dir();
+                java.nio.file.Files.createDirectories(dir);
+                java.nio.file.Path log = dir.resolve("crash.log");
+                String time = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+                java.io.StringWriter writer = new java.io.StringWriter();
+                error.printStackTrace(new java.io.PrintWriter(writer));
+                String entry = "=== " + time + " [" + thread.getName() + "] ===\n" + writer + "\n";
+                java.nio.file.Files.write(log, entry.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+                System.err.println("崩溃日志已写入 " + log);
+            } catch (Throwable ignored) {
+            }
+            error.printStackTrace();
+        });
     }
 
     // ---------------------------------------------------------------- 自检

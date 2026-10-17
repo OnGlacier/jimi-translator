@@ -1,25 +1,23 @@
 package com.jimi.desktop;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.event.MouseMotionAdapter;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
 import java.awt.Point;
-import java.awt.RenderingHints;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,9 +25,10 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-/** 悬浮译文卡：始终置顶、可拖动、可收起成猫猫圆钮。 */
+/** 悬浮译文卡：置顶、可拖动、可缩放、可全屏。窗口不透明，避免无合成器的 Linux 上闪烁。 */
 final class Overlay {
 
     interface Host {
@@ -44,16 +43,14 @@ final class Overlay {
         boolean isAuto();
     }
 
-    private static final Color INK = new Color(0xE6, 0xED, 0xF3);
-    private static final Color INK_SOFT = new Color(0x8B, 0x98, 0xA9);
-    private static final Color CARD_BG = new Color(15, 19, 25);
-    private static final Color CHIP_BG = new Color(42, 51, 63);
-    private static final Color ACCENT = new Color(0xF5, 0x9E, 0x0B);
-
     private static final int DEFAULT_WIDTH = 470;
     private static final int DEFAULT_HEIGHT = 430;
-    private java.awt.Rectangle restoreBounds;
-    private boolean maximized;
+    private static final Color INK = new Color(0xE6, 0xED, 0xF3);
+    private static final Color INK_SOFT = new Color(0x8B, 0x98, 0xA9);
+    private static final Color CARD_DARK = new Color(0x0F, 0x13, 0x19);
+    private static final Color CARD_LIGHT = new Color(0x2A, 0x33, 0x3F);
+    private static final Color CHIP_BG = new Color(0x2A, 0x33, 0x3F);
+    private static final Color ACCENT = new Color(0xF5, 0x9E, 0x0B);
 
     private final Host host;
     private JFrame frame;
@@ -64,10 +61,14 @@ final class Overlay {
     private JLabel autoChip;
     private JLabel directionChip;
     private JPanel moreRow;
+
     private boolean bilingual = true;
     private boolean collapsed;
     private int alphaPct = 86;
     private String direction = "auto";
+    private boolean maximized;
+    private Rectangle restoreBounds;
+
     private final List<JTextArea> sourceViews = new ArrayList<>();
     private final List<JTextArea> bodyViews = new ArrayList<>();
 
@@ -76,16 +77,7 @@ final class Overlay {
         build();
     }
 
-    private static boolean translucentSupported() {
-        try {
-            return !GraphicsEnvironment.isHeadless()
-                && GraphicsEnvironment.getLocalGraphicsEnvironment()
-                .getDefaultScreenDevice().isWindowTranslucencySupported(
-                    java.awt.GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT);
-        } catch (Throwable error) {
-            return false;
-        }
-    }
+    // ---------------------------------------------------------------- 构建
 
     private void build() {
         frame = new JFrame("基米翻译");
@@ -94,62 +86,45 @@ final class Overlay {
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         frame.setLocationRelativeTo(null);
-        if (translucentSupported()) {
-            frame.setBackground(new Color(0, 0, 0, 0));
-        }
+        frame.setBackground(CARD_DARK);
 
-        root = new JPanel(null) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                int alpha = Math.max(30, Math.min(100, alphaPct)) * 255 / 100;
-                Color bg = new Color(CARD_BG.getRed(), CARD_BG.getGreen(), CARD_BG.getBlue(), alpha);
-                g2.setColor(bg);
-                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 18, 18);
-                g2.setColor(new Color(255, 255, 255, 26));
-                g2.setStroke(new BasicStroke(1f));
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 18, 18);
-                g2.dispose();
-            }
-        };
-        root.setOpaque(false);
-        root.setLayout(new BorderLayout());
-        root.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        root = new JPanel(new BorderLayout());
+        root.setBackground(CARD_DARK);
+        root.setBorder(BorderFactory.createEmptyBorder(10, 12, 8, 12));
 
-        // ---- 顶部 ----
+        // ---- 顶部：标题 + 状态 + 全屏 ----
         JPanel header = new JPanel(new BorderLayout(6, 0));
-        header.setOpaque(false);
+        header.setBackground(CARD_DARK);
+
+        JPanel left = new JPanel(new BorderLayout(6, 0));
+        left.setBackground(CARD_DARK);
         JLabel title = new JLabel("🐱 基米翻译");
         title.setForeground(INK);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 14f));
-        JPanel left = new JPanel(new BorderLayout(6, 0));
-        left.setOpaque(false);
-        left.add(title, BorderLayout.WEST);
+        title.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
         statusLabel = new JLabel("待机");
         statusLabel.setForeground(INK_SOFT);
         statusLabel.setFont(statusLabel.getFont().deriveFont(11.5f));
+        left.add(title, BorderLayout.WEST);
         left.add(statusLabel, BorderLayout.CENTER);
         header.add(left, BorderLayout.CENTER);
 
         JLabel fullChip = chip("⛶", false);
-        fullChip.setToolTipText("放大到全屏 / 还原（双击标题栏也行）");
+        fullChip.setToolTipText("全屏 / 还原（Esc 也能退出全屏）");
         fullChip.addMouseListener(click(this::toggleMaximize));
         header.add(fullChip, BorderLayout.EAST);
-        header.addMouseListener(new DragHandler());
-        header.addMouseMotionListener(new DragHandler());
-        title.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                if (event.getClickCount() == 2) toggleMaximize();
-            }
-        });
 
-        // ---- 按钮行 ----
+        // 拖动：标题、状态、空白处都能拖
+        DragHandler drag = new DragHandler();
+        for (JComponent area : new JComponent[] {header, left, title, statusLabel}) {
+            area.addMouseListener(drag);
+            area.addMouseMotionListener(drag);
+        }
+
+        // ---- 动作行 ----
         JPanel actions = new JPanel();
-        actions.setOpaque(false);
+        actions.setBackground(CARD_DARK);
         actions.setLayout(new BoxLayout(actions, BoxLayout.X_AXIS));
-        actions.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
         JLabel regionChip = chip("框选", true);
         regionChip.addMouseListener(click(host::onPickRegion));
@@ -168,41 +143,41 @@ final class Overlay {
         closeChip.addMouseListener(click(this::collapse));
 
         actions.add(regionChip);
-        actions.add(Box.createHorizontalStrut(6));
+        actions.add(Box.createHorizontalStrut(5));
         actions.add(autoChip);
-        actions.add(Box.createHorizontalStrut(6));
+        actions.add(Box.createHorizontalStrut(5));
         actions.add(directionChip);
-        actions.add(Box.createHorizontalStrut(6));
+        actions.add(Box.createHorizontalStrut(5));
         actions.add(alphaChip);
-        actions.add(Box.createHorizontalStrut(6));
+        actions.add(Box.createHorizontalStrut(5));
         actions.add(clearChip);
-        actions.add(Box.createHorizontalStrut(6));
+        actions.add(Box.createHorizontalStrut(5));
         actions.add(closeChip);
         actions.add(Box.createHorizontalGlue());
 
-        // ---- 折叠行：透明度 + 显示原文 ----
+        // ---- 折叠行 ----
         moreRow = new JPanel();
-        moreRow.setOpaque(false);
+        moreRow.setBackground(CARD_DARK);
         moreRow.setLayout(new BoxLayout(moreRow, BoxLayout.Y_AXIS));
         moreRow.setVisible(false);
         moreRow.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
-        JSlider slider = new JSlider(30, 100, alphaPct);
-        slider.setOpaque(false);
-        slider.setForeground(INK_SOFT);
-        slider.addChangeListener(event -> {
-            alphaPct = slider.getValue();
-            root.repaint();
-        });
+        JSlider alphaSlider = new JSlider(30, 100, alphaPct);
+        alphaSlider.setOpaque(false);
+        alphaSlider.setForeground(INK_SOFT);
         JLabel alphaLabel = new JLabel("背景 " + alphaPct + "%");
         alphaLabel.setForeground(INK_SOFT);
         alphaLabel.setFont(alphaLabel.getFont().deriveFont(11f));
-        slider.addChangeListener(event -> alphaLabel.setText("背景 " + slider.getValue() + "%"));
+        alphaSlider.addChangeListener(event -> {
+            alphaPct = alphaSlider.getValue();
+            alphaLabel.setText("背景 " + alphaPct + "%");
+            applyCardColor();
+        });
 
         JPanel alphaRow = new JPanel(new BorderLayout(8, 0));
-        alphaRow.setOpaque(false);
+        alphaRow.setBackground(CARD_DARK);
         alphaRow.add(alphaLabel, BorderLayout.WEST);
-        alphaRow.add(slider, BorderLayout.CENTER);
+        alphaRow.add(alphaSlider, BorderLayout.CENTER);
 
         JLabel bilingualChip = chip(bilingual ? "显示原文 · 开" : "显示原文 · 关", bilingual);
         bilingualChip.addMouseListener(click(() -> {
@@ -212,7 +187,7 @@ final class Overlay {
             applyBilingual();
         }));
         JPanel displayRow = new JPanel(new BorderLayout());
-        displayRow.setOpaque(false);
+        displayRow.setBackground(CARD_DARK);
         displayRow.add(bilingualChip, BorderLayout.WEST);
 
         moreRow.add(alphaRow);
@@ -220,38 +195,40 @@ final class Overlay {
         moreRow.add(displayRow);
 
         JPanel top = new JPanel();
-        top.setOpaque(false);
+        top.setBackground(CARD_DARK);
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
         top.add(header);
+        top.add(Box.createVerticalStrut(8));
         top.add(actions);
         top.add(moreRow);
 
         // ---- 译文流 ----
         feed = new JPanel();
-        feed.setOpaque(false);
+        feed.setBackground(CARD_DARK);
         feed.setLayout(new BoxLayout(feed, BoxLayout.Y_AXIS));
         JPanel feedHolder = new JPanel(new BorderLayout());
-        feedHolder.setOpaque(false);
+        feedHolder.setBackground(CARD_DARK);
         feedHolder.add(feed, BorderLayout.NORTH);
+
         scroll = new JScrollPane(feedHolder);
-        scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
         scroll.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+        scroll.setBackground(CARD_DARK);
+        scroll.getViewport().setBackground(CARD_DARK);
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.getVerticalScrollBar().setUnitIncrement(24);
 
+        // ---- 右下角缩放 ----
         JLabel grip = new JLabel("◢");
-        grip.setForeground(new Color(255, 255, 255, 70));
+        grip.setForeground(new Color(255, 255, 255, 90));
         grip.setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
-        grip.setToolTipText("拖动右下角调整大小");
-        grip.setBorder(BorderFactory.createEmptyBorder(0, 0, -2, 0));
+        grip.setToolTipText("拖动缩放窗口");
         MouseAdapter resizeHandler = new MouseAdapter() {
-            private java.awt.Point start;
+            private Point start;
             private Dimension size;
 
             @Override
             public void mousePressed(MouseEvent event) {
-                start = event.getPoint();
+                start = event.getLocationOnScreen();
                 size = frame.getSize();
             }
 
@@ -259,8 +236,9 @@ final class Overlay {
             public void mouseDragged(MouseEvent event) {
                 if (start == null || size == null) return;
                 maximized = false;
-                int width = Math.max(320, size.width + event.getX() - start.x);
-                int height = Math.max(240, size.height + event.getY() - start.y);
+                Point now = event.getLocationOnScreen();
+                int width = Math.max(360, size.width + now.x - start.x);
+                int height = Math.max(240, size.height + now.y - start.y);
                 frame.setSize(width, height);
             }
 
@@ -271,9 +249,8 @@ final class Overlay {
         };
         grip.addMouseListener(resizeHandler);
         grip.addMouseMotionListener(resizeHandler);
-
         JPanel south = new JPanel(new BorderLayout());
-        south.setOpaque(false);
+        south.setBackground(CARD_DARK);
         south.add(grip, BorderLayout.EAST);
 
         root.add(top, BorderLayout.NORTH);
@@ -281,9 +258,23 @@ final class Overlay {
         root.add(south, BorderLayout.SOUTH);
 
         frame.setContentPane(root);
+        bindEscape();
+        applyCardColor();
     }
 
-    // ---------------------------------------------------------------- 交互
+    private void bindEscape() {
+        JComponent pane = frame.getRootPane();
+        pane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "exit-fullscreen");
+        pane.getActionMap().put("exit-fullscreen", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                if (maximized) toggleMaximize();
+            }
+        });
+    }
+
+    // ---------------------------------------------------------------- 样式
 
     private interface Action {
         void run();
@@ -314,6 +305,36 @@ final class Overlay {
         label.setForeground(accented ? Color.WHITE : INK);
     }
 
+    /** 背景深浅：不透明度越低越接近浅灰，越高越接近卡片深色。 */
+    private void applyCardColor() {
+        float ratio = Math.max(0.3f, Math.min(1f, alphaPct / 100f));
+        int r = (int) (CARD_LIGHT.getRed() + (CARD_DARK.getRed() - CARD_LIGHT.getRed()) * ratio);
+        int g = (int) (CARD_LIGHT.getGreen() + (CARD_DARK.getGreen() - CARD_LIGHT.getGreen()) * ratio);
+        int b = (int) (CARD_LIGHT.getBlue() + (CARD_DARK.getBlue() - CARD_LIGHT.getBlue()) * ratio);
+        Color color = new Color(r, g, b);
+        frame.setBackground(color);
+        root.setBackground(color);
+        for (java.awt.Component child : allChildren(root)) {
+            if (child instanceof JPanel) {
+                child.setBackground(color);
+            }
+        }
+        root.repaint();
+    }
+
+    private static List<java.awt.Component> allChildren(java.awt.Container parent) {
+        List<java.awt.Component> result = new ArrayList<>();
+        for (java.awt.Component child : parent.getComponents()) {
+            result.add(child);
+            if (child instanceof java.awt.Container) {
+                result.addAll(allChildren((java.awt.Container) child));
+            }
+        }
+        return result;
+    }
+
+    // ---------------------------------------------------------------- 交互
+
     private void cycleDirection() {
         direction = "auto".equals(direction) ? "en2zh" : ("en2zh".equals(direction) ? "zh2en" : "auto");
         directionChip.setText(labelFor(direction));
@@ -321,16 +342,18 @@ final class Overlay {
         host.onDirectionChanged(direction);
     }
 
-    static String labelFor(String direction) {
-        if ("en2zh".equals(direction)) return "英译中";
-        if ("zh2en".equals(direction)) return "中译英";
+    static String labelFor(String value) {
+        if ("en2zh".equals(value)) return "英译中";
+        if ("zh2en".equals(value)) return "中译英";
         return "双向";
     }
 
     void setDirection(String value) {
         direction = value;
-        directionChip.setText(labelFor(value));
-        paintChip(directionChip, !"auto".equals(value));
+        if (directionChip != null) {
+            directionChip.setText(labelFor(value));
+            paintChip(directionChip, !"auto".equals(value));
+        }
     }
 
     void setStatus(String text) {
@@ -347,32 +370,45 @@ final class Overlay {
     void setVisible(boolean visible) {
         SwingUtilities.invokeLater(() -> {
             frame.setVisible(visible);
-            if (visible) frame.toFront();
+            if (visible) {
+                frame.toFront();
+                frame.requestFocus();
+            }
         });
     }
 
     void toggleVisible() {
         SwingUtilities.invokeLater(() -> {
             frame.setVisible(!frame.isVisible());
-            if (frame.isVisible()) frame.toFront();
+            if (frame.isVisible()) {
+                frame.toFront();
+                frame.requestFocus();
+            }
         });
     }
 
     private void collapse() {
         collapsed = true;
         SwingUtilities.invokeLater(() -> {
-            frame.setSize(64, 64);
+            frame.setSize(72, 72);
             frame.setContentPane(bubble());
             frame.revalidate();
+            frame.repaint();
         });
     }
 
     void expand() {
         collapsed = false;
         SwingUtilities.invokeLater(() -> {
-            frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             frame.setContentPane(root);
+            if (maximized) {
+                frame.setBounds(Screen.bounds());
+            } else {
+                frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+                frame.setLocationRelativeTo(null);
+            }
             root.revalidate();
+            root.repaint();
             frame.toFront();
         });
     }
@@ -382,67 +418,79 @@ final class Overlay {
     }
 
     private JPanel bubble() {
-        JPanel panel = new JPanel(null) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(ACCENT);
-                g2.fillOval(0, 0, getWidth() - 1, getHeight() - 1);
-                g2.setColor(new Color(255, 255, 255, 200));
-                g2.setStroke(new BasicStroke(2f));
-                g2.drawOval(1, 1, getWidth() - 3, getHeight() - 3);
-                g2.dispose();
-            }
-        };
-        panel.setOpaque(false);
-        panel.setLayout(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(ACCENT);
         JLabel cat = new JLabel("🐱", JLabel.CENTER);
-        cat.setFont(cat.getFont().deriveFont(26f));
+        cat.setFont(cat.getFont().deriveFont(28f));
         panel.add(cat, BorderLayout.CENTER);
         panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        DragHandler drag = new DragHandler();
+        MouseAdapter drag = new MouseAdapter() {
+            private Point start;
+            private Point frameStart;
+            private boolean moved;
+
+            @Override
+            public void mousePressed(MouseEvent event) {
+                start = event.getLocationOnScreen();
+                frameStart = frame.getLocation();
+                moved = false;
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent event) {
+                if (start == null) return;
+                Point now = event.getLocationOnScreen();
+                if (Math.abs(now.x - start.x) > 3 || Math.abs(now.y - start.y) > 3) moved = true;
+                frame.setLocation(frameStart.x + now.x - start.x, frameStart.y + now.y - start.y);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent event) {
+                if (!moved) expand();
+                start = null;
+            }
+        };
         panel.addMouseListener(drag);
         panel.addMouseMotionListener(drag);
-        panel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                if (drag.moved) return;
-                expand();
-            }
-        });
         return panel;
     }
 
     void toggleMaximize() {
+        Rectangle screen = Screen.bounds();
         if (maximized) {
-            frame.setBounds(restoreBounds == null ? new java.awt.Rectangle(frame.getLocation(), new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT)) : restoreBounds);
+            frame.setBounds(restoreBounds != null ? restoreBounds
+                : new Rectangle(screen.width / 2 - DEFAULT_WIDTH / 2, screen.height / 2 - DEFAULT_HEIGHT / 2,
+                    DEFAULT_WIDTH, DEFAULT_HEIGHT));
             maximized = false;
         } else {
             restoreBounds = frame.getBounds();
-            Rectangle screen = Screen.bounds();
             frame.setBounds(screen);
             maximized = true;
         }
         frame.validate();
+        frame.repaint();
     }
 
     private final class DragHandler extends MouseAdapter {
-        private Point origin;
-        private boolean moved;
+        private Point start;
+        private Point frameStart;
 
         @Override
         public void mousePressed(MouseEvent event) {
-            origin = event.getPoint();
-            moved = false;
+            start = event.getLocationOnScreen();
+            frameStart = frame.getLocation();
         }
 
         @Override
         public void mouseDragged(MouseEvent event) {
-            if (origin == null) return;
-            moved = true;
-            Point location = frame.getLocation();
-            frame.setLocation(location.x + event.getX() - origin.x, location.y + event.getY() - origin.y);
+            if (start == null || frameStart == null) return;
+            Point now = event.getLocationOnScreen();
+            frame.setLocation(frameStart.x + now.x - start.x, frameStart.y + now.y - start.y);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent event) {
+            start = null;
         }
     }
 

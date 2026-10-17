@@ -53,8 +53,13 @@ final class Controller implements Overlay.Host {
     public void onPickRegion() {
         if (overlay != null) overlay.setVisible(false);
         SwingUtilities.invokeLater(() -> RegionPicker.pick(rect -> {
-            pendingRegion = pad(rect);
+            // 取消时 rect 为 null：把浮窗还回来，但不翻译
             if (overlay != null) overlay.setVisible(true);
+            if (rect == null) {
+                if (overlay != null) overlay.setStatus("已取消框选");
+                return;
+            }
+            pendingRegion = pad(rect);
             translateNow(true);
         }));
     }
