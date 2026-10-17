@@ -1,0 +1,5 @@
+# dsh-rl-translator bundle patch：一行 Host 插件 + 浏览器半部（由 package.json 的 dsh.client 发现）。
+# 刻意不写模块级 config：全部设置由浮窗面板持久化到 /root/.dsh/rl-translator/state.json。
+- insert:
+    - id: dsh-rl-translator
+      name: 'dsh-rl-translator'

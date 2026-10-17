@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "RL Paper Translator",
+    "description": "Reads English papers on the tablet screen and translates them into Chinese for reinforcement learning and robotics; only new text is translated, into a DSH floating panel and the phone overlay."
+  }
+}

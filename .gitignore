@@ -1,0 +1,23 @@
+# 构建产物
+app/out/
+app/build/
+*.apk
+*.aab
+*.zip
+*.log
+
+# 签名材料（绝对不要提交私钥）
+*.jks
+*.keystore
+keystore.jks
+
+# 本地配置
+local.properties
+.idea/
+.gradle/
+.vscode/
+.DS_Store
+
+# 临时文件
+*.tmp
+*.bak

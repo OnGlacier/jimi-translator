@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">基米翻译</string>
+    <string name="service_label">基米翻译 · 读屏服务</string>
+    <string name="service_desc">读取屏幕上的英文论文，把新出现的段落译成中文显示在悬浮窗里。</string>
+</resources>
