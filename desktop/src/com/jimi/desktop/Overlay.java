@@ -387,7 +387,7 @@ final class Overlay {
         });
     }
 
-    private void collapse() {
+    void collapse() {
         collapsed = true;
         SwingUtilities.invokeLater(() -> {
             frame.setSize(72, 72);

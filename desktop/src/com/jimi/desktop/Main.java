@@ -2,6 +2,9 @@ package com.jimi.desktop;
 
 import java.util.Arrays;
 import java.util.List;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 /** 入口：带 --selftest 时只跑非图形自检（CI / 无显示器环境可用）。 */
@@ -14,6 +17,10 @@ public final class Main {
         List<String> arguments = Arrays.asList(args);
         if (arguments.contains("--selftest")) {
             selfTest();
+            return;
+        }
+        if (arguments.contains("--smoke")) {
+            smoke();
             return;
         }
         if (!java.awt.GraphicsEnvironment.isHeadless()) {
@@ -50,6 +57,70 @@ public final class Main {
             }
             error.printStackTrace();
         });
+    }
+
+    /** 图形冒烟测试：建浮窗、进/退全屏、收起/展开，最后截一张图。需要 DISPLAY。 */
+    private static void smoke() throws Exception {
+        Overlay.Host host = new Overlay.Host() {
+            @Override
+            public void onPickRegion() {
+            }
+
+            @Override
+            public void onToggleAuto() {
+            }
+
+            @Override
+            public void onClear() {
+            }
+
+            @Override
+            public void onDirectionChanged(String direction) {
+            }
+
+            @Override
+            public boolean isAuto() {
+                return false;
+            }
+        };
+        final Overlay[] holder = new Overlay[1];
+        SwingUtilities.invokeAndWait(() -> {
+            Overlay overlay = new Overlay(host);
+            overlay.setVisible(true);
+            overlay.setStatus("冒烟测试 · 拖动/全屏/收起");
+            overlay.addEntry("To encourage exploration, the objective adds an entropy bonus.",
+                "为了鼓励探索，目标函数里加入了熵奖励。");
+            holder[0] = overlay;
+        });
+        Thread.sleep(700);
+
+        SwingUtilities.invokeAndWait(() -> holder[0].toggleMaximize());
+        Thread.sleep(500);
+        SwingUtilities.invokeAndWait(() -> holder[0].toggleMaximize());
+        Thread.sleep(300);
+
+        SwingUtilities.invokeAndWait(holder[0]::collapse);
+        Thread.sleep(400);
+        SwingUtilities.invokeAndWait(holder[0]::expand);
+        Thread.sleep(500);
+
+        // 框选层：打开后截图，再模拟取消（dispose）
+        final boolean[] picked = {false};
+        RegionPicker.pick(rect -> picked[0] = true);
+        Thread.sleep(900);
+        BufferedImage pickerShot = new java.awt.Robot().createScreenCapture(Screen.bounds());
+        ImageIO.write(pickerShot, "png", new java.io.File("smoke-picker.png"));
+        SwingUtilities.invokeAndWait(() -> {
+            for (java.awt.Window window : java.awt.Window.getWindows()) {
+                if (window.isShowing()) window.dispose();
+            }
+        });
+        Thread.sleep(300);
+
+        BufferedImage shot = new java.awt.Robot().createScreenCapture(Screen.bounds());
+        ImageIO.write(shot, "png", new java.io.File("smoke.png"));
+        System.out.println("SMOKE_OK smoke.png");
+        System.exit(0);
     }
 
     // ---------------------------------------------------------------- 自检

@@ -11,6 +11,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -44,6 +45,14 @@ final class RegionPicker {
         boolean translucent = GraphicsEnvironment.getLocalGraphicsEnvironment()
             .getDefaultScreenDevice().isWindowTranslucencySupported(
                 GraphicsDevice.WindowTranslucency.TRANSLUCENT);
+
+        BufferedImage backdrop = null;
+        try {
+            backdrop = new java.awt.Robot().createScreenCapture(screen);
+        } catch (Throwable error) {
+            backdrop = null;
+        }
+        final BufferedImage background = backdrop;
 
         JFrame window = new JFrame("框选翻译区域");
         window.setUndecorated(true);
@@ -100,7 +109,13 @@ final class RegionPicker {
             protected void paintComponent(Graphics g) {
                 java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(0, 0, 0, 110));
+                if (background != null) {
+                    g2.drawImage(background, 0, 0, getWidth(), getHeight(), null);
+                } else {
+                    g2.setColor(new Color(0x30, 0x30, 0x30));
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                }
+                g2.setColor(new Color(0, 0, 0, 120));
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 if (start != null && end != null) {
                     Rectangle rect = normalize(start, end);
