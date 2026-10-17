@@ -5,6 +5,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Size](https://img.shields.io/badge/APK-64%20KB-F59E0B)](https://github.com/OnGlacier/jimi-translator/releases/latest)
 
+> **不用截图上传、不用切窗口——它直接读屏幕像素，译文就浮在原处。**
+>
 > **两种用法，一种比一种省事：**
 > **框选**——指哪翻哪，一块区域、一张图、界面上一行字都行；
 > **自动**——开一次，它跟着你滚动，整屏内容自己翻。
