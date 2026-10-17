@@ -48,7 +48,7 @@ final class Overlay {
     private int alphaPct = 70;
     private boolean catTheme;
     private TextView directionChip;
-    /** 中英对照：显示每段上面的英文原句。 */
+    /** 显示原文：译文上方显示对应的原句。 */
     private boolean bilingual = true;
     private final java.util.List<TextView> englishViews = new java.util.ArrayList<>();
     private final java.util.List<TextView> bodyViews = new java.util.ArrayList<>();
@@ -269,7 +269,7 @@ final class Overlay {
         statsView.setTextSize(10.5f);
         statsView.setTextColor(0xFF7C8899);
         statsView.setPadding(0, dp(6), 0, 0);
-        statsView.setText("点「译」翻译当前屏幕；「自动」每 8 秒看一次");
+        statsView.setText("点「框选」圈一块翻；「自动」每 8 秒看一次");
         card.addView(statsView);
 
         // 拖动

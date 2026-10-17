@@ -137,7 +137,7 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
     // ------------------------------------------------------------------ 对外
     @Override
     public void onTranslateNow() {
-        // 手动点「译」永远真翻，不做画面去重
+        // 手动框选永远真翻，不做画面去重
         translateNow(true);
     }
 

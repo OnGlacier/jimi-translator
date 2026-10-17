@@ -178,7 +178,7 @@ public class MainActivity extends Activity {
         title.getPaint().setFakeBoldText(true);
         titleBox.addView(title);
         TextView subtitle = new TextView(this);
-        subtitle.setText("看屏幕 · 只翻新内容 · 中英对照");
+        subtitle.setText("看屏幕 · 只翻新内容 · 英中双向");
         subtitle.setTextSize(12.5f);
         subtitle.setTextColor(INK_SOFT);
         titleBox.addView(subtitle);
@@ -284,7 +284,7 @@ public class MainActivity extends Activity {
         TextView note = new TextView(this);
         note.setText("🐱 使用顺序\n"
             + "1. 系统设置 → 无障碍 → 已下载的服务里打开「基米翻译 · 读屏服务」；\n"
-            + "2. 浮窗出现后：点「框选」圈一块翻，或点「自动」开始整屏跟读（再点停止）；\n"
+            + "2. 浮窗出现后：点「框选」圈一块翻，或点「自动」开始整屏连续翻译（再点停止）；\n"
             + "3. 浮窗可拖动，「不透明度」调背景深浅，「清空」清掉已翻记录与去重；\n"
             + "4. API key 只存在本机 App 私有目录，不会发到你填的接口以外的地方。\n"
             + "5. 若无障碍服务总被系统关掉：用 ADB 或 Shizuku 执行一次 `" + A11y.grantCommand(this) + "`，"
