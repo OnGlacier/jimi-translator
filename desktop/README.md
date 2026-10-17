@@ -20,7 +20,17 @@ desktop/
 └── build.bat / run.bat      Windows
 ```
 
-## 运行
+## 安装（从 Release 下载，不用装 Java）
+
+| 平台 | 文件 | 用法 |
+|---|---|---|
+| Windows | `jimi-translator-<版本>-windows.exe` | 双击安装，自带运行时；未签名，SmartScreen 点「更多信息 → 仍要运行」 |
+| Linux | `jimi-translator_<版本>-1_amd64.deb` | `sudo apt install ./jimi-translator_xxx.deb` |
+| 任意（需 Java 17+） | `jimi-translator-desktop-<版本>.jar` | `java -jar jimi-translator-desktop-xxx.jar` |
+
+deb 是在 Ubuntu 24.04 上打的（glibc 2.39），更老的发行版请用 jar 或自行构建。
+
+## 从源码运行
 
 需要 **JDK 17 或更高**。
 

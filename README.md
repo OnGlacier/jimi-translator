@@ -4,7 +4,7 @@
 
 论文、教材、网页、软件界面、聊天记录——屏幕上是什么就翻什么。默认「双向」：英文出中文，中文出英文。内置一份强化学习 / 机器人方向的术语表作为默认偏好，也可以整段替换提示词、追加自己的领域术语。
 
-不注册、不登录、没有云端；一个约 66 KB 的 APK，装完就能用（自带你自己的模型 API key）。
+不注册、不登录、没有云端；Android 是一个约 64 KB 的 APK，桌面版是自带运行时的安装包（Windows exe / Linux deb）。
 
 ---
 
@@ -114,17 +114,27 @@ pm grant com.rltranslator.overlay android.permission.WRITE_SECURE_SETTINGS
 
 ## 桌面版（Windows / Linux）
 
-同一套翻译逻辑也有桌面版：纯 Java 17 + Swing，零依赖，一个 jar 就能跑。
+同一套翻译逻辑也有桌面版：纯 Java 17 + Swing，零第三方依赖，**不需要无障碍服务**（也就没有「权限被系统关掉」的问题）。
+
+| 平台 | 安装包 | 说明 |
+|---|---|---|
+| Windows | `jimi-translator-<版本>-windows.exe` | 双击安装，自带 Java 运行时；未签名，SmartScreen 提示点「仍要运行」 |
+| Linux | `jimi-translator_<版本>-1_amd64.deb` | `sudo apt install ./xxx.deb`（在 Ubuntu 24.04 上构建） |
+| 任意（需 Java 17+） | `jimi-translator-desktop-<版本>.jar` | `java -jar xxx.jar` |
+
+都在 [Releases](https://github.com/OnGlacier/jimi-translator/releases) 里。
+
+桌面浮窗和手机版一致：`框选 · 自动 · 双向/英译中/中译英 · 不透明度 · 清空 · 收起`；
+**拖右下角 ◢ 可缩放窗口**，点标题栏 **⛶** 或双击标题栏可全屏。
+
+从源码构建：
 
 ```bash
 cd desktop
 ./build.sh && ./run.sh        # Windows 用 build.bat / run.bat
 ```
 
-和手机版一样：框选、自动跟读、双向 / 英译中 / 中译英、流式输出、去重、猫猫圆钮。
-桌面端用 `java.awt.Robot` 截屏、无边框置顶窗口显示译文，**不需要无障碍服务**（也就没有「权限被系统关掉」的问题）。
-
-细节与平台备注（Wayland 需要 XWayland 或屏幕录制门户授权）见 [desktop/README.md](desktop/README.md)。
+平台备注（Linux Wayland 需要 XWayland 或屏幕录制门户授权）见 [desktop/README.md](desktop/README.md)。
 
 ---
 
