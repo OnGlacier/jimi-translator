@@ -2,6 +2,18 @@
 
 遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与语义化版本。
 
+## [1.43] - 2026-10-17
+
+### 修复
+- **版本号不一致**：v1.41 / v1.42 只改了桌面版，但 Release 里仍挂着 Android APK，
+  装上去却显示 versionName 1.40（内容也和 1.40 完全一样）。
+  现在 CI 打 tag 时会用 tag 覆盖 APK 的 `versionCode` / `versionName`，
+  Android 与桌面共用同一个版本号。
+
+### 说明
+- 从这一版起：**每次发版都对齐版本号**；APK 若没有功能变化，只是版本号变了，
+  属于正常现象（Android 端代码没动）。
+
 ## [1.42] - 2026-10-17
 
 ### 新增

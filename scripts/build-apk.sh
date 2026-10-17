@@ -39,7 +39,11 @@ echo "== aapt2 compile"
 $AAPT2 compile --dir "$APP/res" -o "$OUT/res.zip"
 
 echo "== aapt2 link"
-$AAPT2 link -o "$OUT/base.apk" -I "$JAR" \
+# 允许用环境变量覆盖版本号，CI 打 tag 时直接对齐（避免 APK 里还写着旧版本）
+VERSION_FLAGS=""
+[ -n "$JIMI_VERSION_CODE" ] && VERSION_FLAGS="$VERSION_FLAGS --version-code $JIMI_VERSION_CODE"
+[ -n "$JIMI_VERSION_NAME" ] && VERSION_FLAGS="$VERSION_FLAGS --version-name $JIMI_VERSION_NAME"
+$AAPT2 link -o "$OUT/base.apk" -I "$JAR" $VERSION_FLAGS \
   --manifest "$APP/AndroidManifest.xml" --java "$OUT/gen" "$OUT/res.zip"
 
 echo "== javac"

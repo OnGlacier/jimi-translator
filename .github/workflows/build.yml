@@ -24,6 +24,13 @@ jobs:
         with:
           packages: "platforms;android-35 build-tools;34.0.0"
 
+      - name: Version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          NAME="${GITHUB_REF_NAME#v}"
+          echo "JIMI_VERSION_NAME=$NAME" >> "$GITHUB_ENV"
+          echo "JIMI_VERSION_CODE=$(echo "$NAME" | tr -d '.')" >> "$GITHUB_ENV"
+
       - name: Build APK
         run: bash scripts/build-apk.sh
 
