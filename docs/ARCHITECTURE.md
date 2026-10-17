@@ -3,10 +3,8 @@
 ## 组件
 
 ```
-MainActivity          配置页（橙色主题）：key / 端点 / 模型 / 方向 / 提示词 / 术语 / 开关
+MainActivity          配置页（橙色主题）：key / 端点 / 模型 / 方向 / 提示词 / 术语 / 开关；启动时自愈无障碍开关
 CaptureService        无障碍服务：截屏、调度、请求模型、去重、写浮窗（前台服务）
-GuardService          守护前台服务：每 15 秒检查读屏是否被系统关掉，掉了就写回
-BootReceiver          开机 / 升级后拉起守护服务
 A11y                  无障碍开关读写：是否启用、是否有自愈权限、写回设置
 Overlay               悬浮窗：卡片、按钮、译文流、透明度、显示原文、收起圆钮
 RegionPicker          全屏框选层：拖一个矩形，返回屏幕坐标
@@ -65,11 +63,9 @@ word = 长度 ≥ 3 且非停用词的词集合
 
 | 组件 | 类型 | 作用 |
 |---|---|---|
-| `CaptureService` | 无障碍服务 + 前台服务（`specialUse`） | 截屏与翻译，常驻通知「基米翻译正在读屏」 |
-| `GuardService` | 前台服务，`START_STICKY` | 每 15 秒检查读屏是否被关，掉了就写回；被系统杀掉后尽量自恢复 |
-| `BootReceiver` | 广播接收器 | 开机 / 升级后启动 `GuardService` |
+| `CaptureService` | 无障碍服务 + 前台服务（`specialUse`） | 截屏与翻译；前台状态用于降低被系统清理的概率 |
 
-写回无障碍开关需要 `WRITE_SECURE_SETTINGS`（一次性 ADB / Shizuku / root 授权）——Android 不允许 App 自己打开自己的无障碍服务，这是唯一合规途径。没有授权时只有前台保活生效。
+写回无障碍开关需要 `WRITE_SECURE_SETTINGS`（一次性 ADB / Shizuku / root 授权）——Android 不允许 App 自己打开自己的无障碍服务，这是唯一合规途径。没有轮询：只在 MainActivity 启动时检查并写回一次。
 
 ## 数据与隐私
 
