@@ -1,0 +1,77 @@
+# 基米翻译 · 桌面版（Windows / Linux）
+
+同一套「读屏幕 → 视觉模型 → 去重 → 浮窗」逻辑的桌面实现，纯 Java 17 + Swing，**零第三方依赖**。
+
+```
+desktop/
+├── src/com/jimi/desktop/
+│   ├── Main.java            入口（--selftest 跑自检）
+│   ├── Settings.java        设置窗口（橙色哈基米主题）
+│   ├── Overlay.java         悬浮译文卡：可拖动、可收起成猫猫圆钮
+│   ├── RegionPicker.java    全屏框选（拖矩形，Esc 取消）
+│   ├── Controller.java      截屏 / 定时 / 翻译 / 去重 的调度
+│   ├── Screen.java          截屏、缩放、JPEG、画面指纹
+│   ├── TranslateClient.java 模型调用（流式 / 整段、JSON 抢救）
+│   ├── Prompt.java          提示词（双向 / 英译中 / 中译英）
+│   ├── Dedupe.java          句子级去重（归一化 + Jaccard）
+│   ├── Config.java          ~/.jimi-translator/config.properties
+│   └── Json.java            极简 JSON 解析
+├── build.sh / run.sh        Linux / macOS
+└── build.bat / run.bat      Windows
+```
+
+## 运行
+
+需要 **JDK 17 或更高**。
+
+```bash
+# Linux / macOS
+./build.sh && ./run.sh
+```
+
+```bat
+:: Windows
+build.bat
+run.bat
+```
+
+首次启动会提示填 API key：默认接口 `https://api.deepseek.com/v1`、模型 `deepseek-flash`（需要支持图片输入）。
+
+## 用法
+
+1. 填好 API key →「保存设置」→「显示 / 收回浮窗」；
+2. 浮窗上点「**框选**」，拖一个矩形（松开即翻，Esc 取消）；
+3. 点「**自动**」开始定时跟读，画面没变化时会跳过，不浪费 token；
+4. 「双向 / 英译中 / 中译英」切换方向；「不透明度」展开滑杆和「显示原文」；
+5. 「收起」后是一颗可拖动的猫猫圆钮，点它展开。
+
+## 和手机版的差别
+
+| | 手机版 | 桌面版 |
+|---|---|---|
+| 截屏 | 无障碍服务 `takeScreenshot` | `java.awt.Robot` |
+| 悬浮窗 | `TYPE_ACCESSIBILITY_OVERLAY` | 无边框 + 置顶 `JFrame` |
+| 后台常驻 | 无障碍服务 | 不常驻，关窗口即退出 |
+| 快捷键 | 无 | 无（点浮窗按钮） |
+
+桌面平台没有「无障碍服务被系统关掉」这个问题——`Robot` 截屏不需要额外授权（Wayland 下需要 XWayland 或门户授权，见下）。
+
+## 平台备注
+
+- **Windows**：开箱即用，`Robot` 截屏、透明窗口都支持；
+- **Linux X11**：开箱即用；
+- **Linux Wayland**：`Robot` 截屏可能只能拿到黑屏，需要：
+  - 用 XWayland 会话运行，或
+  - 在 GNOME/KDE 里给 Java 授予屏幕录制门户权限（`xdg-desktop-portal`），或
+  - 改用 X11 会话登录。
+- 多显示器：截屏取主屏，摆位按主屏坐标。
+
+## 自检
+
+无图形环境也能跑（CI 可用）：
+
+```bash
+java -jar build/jimi-translator.jar --selftest
+```
+
+输出 `SELFTEST_OK` 表示 JSON 解析、截断抢救、去重、提示词拼接都正常。
