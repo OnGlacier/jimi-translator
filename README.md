@@ -1,8 +1,29 @@
 # 基米翻译 · Jimi Translator
 
-**一个简洁、好用的屏幕翻译器：读屏幕、只翻新出现的段落、译文浮在原处。英译中 / 中译英双向。**
+[![Release](https://img.shields.io/github/v/release/OnGlacier/jimi-translator?color=F59E0B)](https://github.com/OnGlacier/jimi-translator/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux-F59E0B)](https://github.com/OnGlacier/jimi-translator/releases/latest)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Size](https://img.shields.io/badge/APK-64%20KB-F59E0B)](https://github.com/OnGlacier/jimi-translator/releases/latest)
 
-论文、教材、网页、软件界面、聊天记录——屏幕上是什么就翻什么。默认「双向」：英文出中文，中文出英文。内置一份强化学习 / 机器人方向的术语表作为默认偏好，也可以整段替换提示词、追加自己的领域术语。
+> **不用截图、不用切窗口：屏幕上是什么，中文就浮在它上面。**
+> Android 悬浮窗 + Windows / Linux 桌面版 · 英译中 / 中译英双向 · 只翻新出现的段落 · 不注册不登录 · 自带模型 key。
+
+**谁在什么时候用它**
+
+- 读英文 PDF / 论文 / 教材，不想在 PDF 和翻译网站之间来回切；
+- 看英文网页、英文软件界面、报错日志，想直接看懂；
+- 看中文内容想快速得到英文（写英文邮件、给外国同事看）；
+- 想要「翻过的不重复翻」——往下滚一屏，只出新内容。
+
+**和常见做法的区别**
+
+| | 截图 + 网页翻译 | 浏览器翻译插件 | 划词翻译 App | **基米翻译** |
+|---|---|---|---|---|
+| 不切窗口 | ❌ 要复制粘贴 | 只限浏览器 | 需要选中文字 | ✅ 悬浮窗直接浮在原处 |
+| 只翻新内容、不重复 | ❌ | ❌ | ❌ | ✅ 句子级去重 |
+| PDF / 图片 / 软件界面 | 部分 | ❌ | 部分 | ✅ 直接读屏幕像素 |
+| 中译英 | 看工具 | 少 | 少 | ✅ 双向 |
+| 隐私 | 文本发到第三方 | — | — | ✅ 只发给你自己的模型接口，无账号无云端 |
 
 不注册、不登录、没有云端；Android 是一个约 64 KB 的 APK，桌面版是自带运行时的安装包（Windows exe / Linux deb）。
 
@@ -17,16 +38,17 @@
 一个**可拖动的橙色猫猫圆钮**浮在屏幕上，点开是一张译文卡：
 
 ```
-┌──────────────────────────────┐
-│ 基米翻译   待机       不透明度 │
-│ 框选  自动  双向  清空  收起  │
-├──────────────────────────────┤
-│ To encourage policies to …    │  ← 原文（可选）
-│ 为了鼓励策略保持随机性并更有效 │
-│ 地探索，标准目标中加入了熵项… │
-├──────────────────────────────┤
-│ 新增 12 段 · 跳过重复 3        │
-└──────────────────────────────┘
+┌────────────────────────────────┐
+│ 基米翻译   待机             ⛶ │
+│ 框选 自动 双向 不透明度 清空 收起│
+├────────────────────────────────┤
+│ To encourage policies to …      │  ← 原文（可选）
+│ 为了鼓励策略保持随机性并更有效   │
+│ 地探索，标准目标中加入了熵项…   │
+├──────────────────────────────────┤
+│ 新增 12 段 · 跳过重复 3          │
+│                            ◢  │  ← 拖这里缩放
+└────────────────────────────────┘
 ```
 
 | 按钮 | 作用 |
@@ -199,6 +221,16 @@ extras/dsh-plugin/         早期 DSH 网页插件原型，保留作参考
 `extras/dsh-plugin/` 是同一套「读屏 → 视觉模型 → 去重 → 浮窗」逻辑的网页版实现，跑在 DeepSeek Harness 里，也能独立部署一个极简翻译页（`/rl-translator`）。它依赖 DSH 的内部服务，不建议单独使用，留作参考。
 
 ---
+
+## 你可能在找的叫法
+
+屏幕翻译 · 悬浮翻译 · 屏幕取词 · 划词翻译（替代） · OCR 翻译 · 截图翻译（替代） · PDF 翻译 ·
+论文翻译 · 英译中 · 中译英 · 英中互译 · 桌面翻译 · Windows 翻译工具 · Linux 翻译工具 ·
+学术阅读辅助 · 强化学习 / 机器学习论文阅读 · DeepSeek 视觉模型 · 自建翻译
+
+关键词（方便搜索）：`screen translator` `screen translation overlay` `PDF translation`
+`academic translation` `English to Chinese` `Chinese to English` `DeepSeek` `accessibility service`
+`Windows translator` `Linux translator` `screenshot translation` `OCR translation`
 
 ## 贡献
 

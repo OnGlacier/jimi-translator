@@ -28,7 +28,8 @@ desktop/
 | Linux | `jimi-translator_<版本>-1_amd64.deb` | `sudo apt install ./jimi-translator_xxx.deb` |
 | 任意（需 Java 17+） | `jimi-translator-desktop-<版本>.jar` | `java -jar jimi-translator-desktop-xxx.jar` |
 
-deb 在 **Ubuntu 22.04** 上构建（glibc 2.35），因此 Ubuntu 22.04 / 24.04、Debian 12+ 都能装；更老的发行版请用 jar 或自行构建。
+deb 在 **Ubuntu 22.04** 上构建：依赖写的是 `libasound2`（24.04 上构建会写成 `libasound2t64`，22.04 装不上），
+所以 Ubuntu 22.04 / 24.04、Debian 12+ 都能装；更老的发行版请用 jar 或自行构建。
 
 ## 从源码运行
 

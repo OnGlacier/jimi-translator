@@ -5,9 +5,10 @@
 ## [1.45] - 2026-10-17
 
 ### 修复
-- **Linux deb 兼容 Ubuntu 22.04**：之前在 ubuntu-24.04 上构建，deb 里打包的 Java 运行时依赖 glibc 2.39，
-  在 22.04（glibc 2.35）上启动就报 `GLIBC_2.38 not found`。现在改用 **ubuntu-22.04 运行器**构建，
-  Ubuntu 22.04 / 24.04、Debian 12+ 均可安装运行。
+- **Linux deb 兼容 Ubuntu 22.04**：之前在 ubuntu-24.04 上构建，deb 的依赖被写成
+  `libasound2t64`（24.04 的 time_t 改名后的包），22.04 上根本没有这个包，
+  `apt install` 会直接报依赖不满足。现在改用 **ubuntu-22.04 运行器**构建，
+  依赖变回 `libasound2`，Ubuntu 22.04 / 24.04（通过过渡包）都能装。
 
 ### 新增（Android）
 - 设置页副标题显示版本号（`v1.45`），不用拆 APK 也能确认装的是哪一版。
