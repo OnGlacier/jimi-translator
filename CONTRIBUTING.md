@@ -18,7 +18,7 @@
 
 ## 代码约定
 
-- Java 8 语法（`source/target 1.8`），不引入第三方库——整个 APK 约 70 KB，保持住。
+- Java 8 语法（`source/target 1.8`），不引入第三方库——整个 APK 约 66 KB，保持住。
 - UI 全部用代码构建（没有 XML 布局），便于手写构建脚本直接 `aapt2 link`。
 - 不使用 `R` 类：资源用 `getResources().getIdentifier("name", "drawable", getPackageName())` 引用（手写构建不生成 R）。
 - 新增可见文案时，中文优先，保持短句、口语化。
