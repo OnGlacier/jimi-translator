@@ -3,13 +3,16 @@
 ## 组件
 
 ```
-MainActivity          配置页（橙色主题）：key / 端点 / 模型 / 提示词 / 术语 / 开关
-CaptureService        无障碍服务：截屏、调度、请求模型、去重、写浮窗
-Overlay               悬浮窗：卡片、按钮、译文流、透明度、中英对照、收起圆钮
+MainActivity          配置页（橙色主题）：key / 端点 / 模型 / 方向 / 提示词 / 术语 / 开关
+CaptureService        无障碍服务：截屏、调度、请求模型、去重、写浮窗（前台服务）
+GuardService          守护前台服务：每 15 秒检查读屏是否被系统关掉，掉了就写回
+BootReceiver          开机 / 升级后拉起守护服务
+A11y                  无障碍开关读写：是否启用、是否有自愈权限、写回设置
+Overlay               悬浮窗：卡片、按钮、译文流、透明度、显示原文、收起圆钮
 RegionPicker          全屏框选层：拖一个矩形，返回屏幕坐标
 Translator            模型调用：OpenAI 兼容 /chat/completions（流式 / 非流式）、JSON 抢救
 Dedupe                句子级去重：归一化 key + 词集合 Jaccard，持久化到 SharedPreferences
-Prompt                提示词与术语表
+Prompt                提示词（按翻译方向生成）与术语表
 Store                 SharedPreferences 封装
 ```
 
@@ -44,17 +47,29 @@ word = 长度 ≥ 3 且非停用词的词集合
 
 - 类型：`TYPE_ACCESSIBILITY_OVERLAY`（无障碍服务附加的悬浮层，不需要 `SYSTEM_ALERT_WINDOW`）；
 - 拖动：标题栏 / 收起圆钮自己处理 `onTouchEvent`，用 `WindowManager.updateViewLayout` 跟随手指；
-- 收起：卡片移除，换成 56dp 猫猫圆钮，位置持久化（`bubbleX/bubbleY`）；
+- 收起：卡片移除，换成 56dp 猫猫圆钮，位置持久化（`bubbleX/bubbleY`），可拖动；
+- 按钮分工：动作栏是操作（框选 / 自动 / 方向 / 清空 / 收起），折叠行是显示设置（不透明度 / 显示原文）；
+- 方向按钮点一下循环「双向 → 英译中 → 中译英」，立即生效；
 - 配色：**背景不透明度 < 55% 用近黑字，≥ 55% 用近白字，且背景越透笔画越粗**（`Paint.FILL_AND_STROKE` + 动态 `strokeWidth`），避免中间灰导致的低对比度。
 
 ## 错误处理
 
 | 现象 | 处理 |
 |---|---|
-| `takeScreenshot` 返回错误码 | 翻译成中文提示（太频繁 / 无权限 / 安全窗口），不停自动跟读 |
+| `takeScreenshot` 返回错误码 | 翻译成中文提示（太频繁 / 无权限 / 安全窗口），不打断自动模式 |
 | 模型返回非法 JSON | 用正则抢救完整段落；仍然为空才把模型原话贴进浮窗 |
 | 模型回 `{"segments":[]}` | 视为「本屏已翻完」，不显示调试信息 |
 | 网关不支持 `response_format` / `thinking` | 自动降级重试（去掉字段再发一次） |
+
+## 后台与存活
+
+| 组件 | 类型 | 作用 |
+|---|---|---|
+| `CaptureService` | 无障碍服务 + 前台服务（`specialUse`） | 截屏与翻译，常驻通知「基米翻译正在读屏」 |
+| `GuardService` | 前台服务，`START_STICKY` | 每 15 秒检查读屏是否被关，掉了就写回；被系统杀掉后尽量自恢复 |
+| `BootReceiver` | 广播接收器 | 开机 / 升级后启动 `GuardService` |
+
+写回无障碍开关需要 `WRITE_SECURE_SETTINGS`（一次性 ADB / Shizuku / root 授权）——Android 不允许 App 自己打开自己的无障碍服务，这是唯一合规途径。没有授权时只有前台保活生效。
 
 ## 数据与隐私
 
