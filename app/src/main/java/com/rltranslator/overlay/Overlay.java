@@ -156,10 +156,10 @@ final class Overlay {
         });
 
         final TextView[] dictChip = new TextView[1];
-        dictChip[0] = chip("中英", true, v -> {
+        dictChip[0] = chip(bilingual ? "显示原文 · 开" : "显示原文 · 关", bilingual, v -> {
             bilingual = !bilingual;
             applyBilingual();
-            dictChip[0].setText(bilingual ? "中英" : "中文");
+            dictChip[0].setText(bilingual ? "显示原文 · 开" : "显示原文 · 关");
             dictChip[0].setBackground(round(bilingual ? accent() : 0x332A333F, 9));
             Store.putBool(ctx, "bilingual", bilingual);
         });
@@ -218,6 +218,12 @@ final class Overlay {
         alphaRow.addView(alphaBar);
         moreRow.addView(alphaRow);
 
+        LinearLayout displayRow = new LinearLayout(ctx);
+        displayRow.setOrientation(LinearLayout.HORIZONTAL);
+        displayRow.setPadding(0, dp(6), 0, dp(2));
+        displayRow.addView(dictChip[0]);
+        moreRow.addView(displayRow);
+
         TextView moreChip = chip("不透明度", false, v -> moreRow.setVisibility(
             moreRow.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
 
@@ -226,14 +232,13 @@ final class Overlay {
         header.addView(moreChip, chipMargin());
         card.addView(header);
 
-        // 第二行：框选（默认）/ 自动 / 中英
+        // 第二行：框选 / 跟读 / 翻译方向 / 清空 / 收起
         LinearLayout actionRow = new LinearLayout(ctx);
         actionRow.setOrientation(LinearLayout.HORIZONTAL);
         actionRow.setPadding(0, dp(7), 0, 0);
         actionRow.addView(regionChip);
         actionRow.addView(autoChip, chipMargin());
         actionRow.addView(directionChip, chipMargin());
-        actionRow.addView(dictChip[0], chipMargin());
         actionRow.addView(clearChip, chipMargin());
         actionRow.addView(closeChip, chipMargin());
         card.addView(actionRow);
