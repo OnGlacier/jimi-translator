@@ -271,19 +271,15 @@ public class MainActivity extends Activity {
             }
         });
 
-        Button battery = pill(root, "关闭电池优化（防止服务被系统关掉）", false);
-        battery.setOnClickListener(v -> {
-            try {
-                android.content.Intent intent = new android.content.Intent(
-                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    android.net.Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
-            } catch (Throwable error) {
-                try {
-                    startActivity(new android.content.Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
-                } catch (Throwable ignored) {
-                }
+        Button heal = pill(root, "自动修复读屏服务（需一次性授权）", false);
+        heal.setOnClickListener(v -> {
+            if (!A11y.canSelfHeal(this)) {
+                Toast.makeText(this, "先授权一次：" + A11y.grantCommand(this), Toast.LENGTH_LONG).show();
+                return;
             }
+            boolean ok = A11y.ensureEnabled(this);
+            Toast.makeText(this, ok ? "已写回设置，稍等一秒看状态" : "写入失败，可能被系统限制", Toast.LENGTH_SHORT).show();
+            statusView.postDelayed(this::refresh, 900);
         });
 
         Button show = pill(root, "显示 / 收回浮窗", false);
@@ -301,7 +297,9 @@ public class MainActivity extends Activity {
             + "1. 系统设置 → 无障碍 → 已下载的服务里打开「基米翻译 · 读屏服务」；\n"
             + "2. 浮窗出现后：点「框选」圈一块翻，或点「自动」开始整屏跟读（再点停止）；\n"
             + "3. 浮窗可拖动，「不透明度」调背景深浅，「清空」清掉已翻记录与去重；\n"
-            + "4. API key 只存在本机 App 私有目录，不会发到你填的接口以外的地方。");
+            + "4. API key 只存在本机 App 私有目录，不会发到你填的接口以外的地方。\n"
+            + "5. 若无障碍服务总被系统关掉：用 ADB 或 Shizuku 执行一次 `" + A11y.grantCommand(this) + "`，"
+            + "之后每次打开 App 会自动恢复。");
         note.setTextSize(12f);
         note.setTextColor(INK_SOFT);
         note.setLineSpacing(dp(3), 1f);
@@ -355,8 +353,12 @@ public class MainActivity extends Activity {
             statusView.setText("● 服务已开启但还没连接：把无障碍开关关掉再打开一次");
             statusView.setTextColor(0xFFB45309);
             statusView.setBackground(rounded(0xFFFFF2DB, 14));
+        } else if (A11y.canSelfHeal(this) && A11y.ensureEnabled(this)) {
+            statusView.setText("● 读屏服务被系统关掉了，已自动恢复（等 1 秒生效）");
+            statusView.setTextColor(0xFFB45309);
+            statusView.setBackground(rounded(0xFFFFF2DB, 14));
         } else {
-            statusView.setText("● 读屏服务未开启：点下面「权限设置（开启无障碍服务）」→ 找「基米翻译 · 读屏服务」→ 打开");
+            statusView.setText("● 读屏服务未开启：点「权限设置（开启无障碍服务）」→「基米翻译 · 读屏服务」→ 打开");
             statusView.setTextColor(0xFFB91C1C);
             statusView.setBackground(rounded(0xFFFDECEC, 14));
         }
@@ -376,6 +378,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // ColorOS 这类 ROM 会把第三方无障碍服务关掉；拿到一次性授权后这里自动恢复
+        if (!A11y.isEnabled(this) && A11y.canSelfHeal(this)) {
+            A11y.ensureEnabled(this);
+        }
         refresh();
+        statusView.postDelayed(this::refresh, 900);
     }
 }

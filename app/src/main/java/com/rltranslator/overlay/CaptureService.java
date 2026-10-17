@@ -119,6 +119,16 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
     }
 
     @Override
+    public void onDirectionChanged(String direction) {
+        if (overlay == null) return;
+        overlay.setStatus("方向：" + ("en2zh".equals(direction) ? "英译中"
+            : ("zh2en".equals(direction) ? "中译英" : "自动")));
+        if ("zh2en".equals(direction) && Dedupe.normalize("").isEmpty()) {
+            // 方向切换后旧记录仍按原文去重，不需要清空
+        }
+    }
+
+    @Override
     public void onToggleAuto() {
         auto = !auto;
         Store.putBool(this, Store.KEY_AUTO, auto);

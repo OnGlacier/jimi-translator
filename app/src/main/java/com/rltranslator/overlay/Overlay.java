@@ -22,6 +22,8 @@ final class Overlay {
     interface Host {
         void onTranslateNow();
         void onToggleAuto();
+
+        void onDirectionChanged(String direction);
         void onClear();
         void onPickRegion();
     }
@@ -45,6 +47,7 @@ final class Overlay {
     /** 0=透明 1=半透明；默认半透明，别挡论文。 */
     private int alphaPct = 70;
     private boolean catTheme;
+    private TextView directionChip;
     /** 中英对照：显示每段上面的英文原句。 */
     private boolean bilingual = true;
     private final java.util.List<TextView> englishViews = new java.util.ArrayList<>();
@@ -68,6 +71,12 @@ final class Overlay {
             LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.leftMargin = dp(6);
         return params;
+    }
+
+    private static String directionLabel(String direction) {
+        if ("en2zh".equals(direction)) return "英译中";
+        if ("zh2en".equals(direction)) return "中译英";
+        return "自动";
     }
 
     private int accent() {
@@ -94,10 +103,10 @@ final class Overlay {
     private TextView chip(String label, boolean accented, View.OnClickListener click) {
         TextView view = new TextView(ctx);
         view.setText(label);
-        view.setTextSize(12.5f);
+        view.setTextSize(12f);
         view.setTextColor(accented ? 0xFFFFFFFF : 0xFFE6EDF3);
         view.setGravity(Gravity.CENTER);
-        view.setPadding(dp(9), dp(5), dp(9), dp(5));
+        view.setPadding(dp(8), dp(5), dp(8), dp(5));
         view.setBackground(round(accented ? accent() : 0x332A333F, 9));
         view.setOnClickListener(click);
         return view;
@@ -134,7 +143,18 @@ final class Overlay {
         statusView.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
         TextView regionChip = chip("框选", true, v -> host.onPickRegion());
-        autoChip = chip("自动", false, v -> host.onToggleAuto());
+        autoChip = chip("跟读", false, v -> host.onToggleAuto());
+
+        // 翻译方向：点一下在「自动 → 英译中 → 中译英」之间循环，按钮上直接显示当前方向
+        directionChip = chip(directionLabel(Store.get(ctx, Store.KEY_DIRECTION, "auto")), false, v -> {
+            String current = Store.get(ctx, Store.KEY_DIRECTION, "auto");
+            String next = "auto".equals(current) ? "en2zh" : ("en2zh".equals(current) ? "zh2en" : "auto");
+            Store.put(ctx, Store.KEY_DIRECTION, next);
+            directionChip.setText(directionLabel(next));
+            directionChip.setBackground(round("auto".equals(next) ? 0x332A333F : accent(), 9));
+            host.onDirectionChanged(next);
+        });
+
         final TextView[] dictChip = new TextView[1];
         dictChip[0] = chip("中英", true, v -> {
             bilingual = !bilingual;
@@ -212,6 +232,7 @@ final class Overlay {
         actionRow.setPadding(0, dp(7), 0, 0);
         actionRow.addView(regionChip);
         actionRow.addView(autoChip, chipMargin());
+        actionRow.addView(directionChip, chipMargin());
         actionRow.addView(dictChip[0], chipMargin());
         actionRow.addView(clearChip, chipMargin());
         actionRow.addView(closeChip, chipMargin());
@@ -485,7 +506,7 @@ final class Overlay {
     void setAuto(boolean enabled) {
         auto = enabled;
         if (autoChip != null) {
-            autoChip.setText(enabled ? "自动·开" : "自动");
+            autoChip.setText(enabled ? "跟读·开" : "跟读");
             autoChip.setBackground(round(enabled ? accent() : 0x332A333F, 9));
             autoChip.setTextColor(enabled ? 0xFFFFFFFF : 0xFFE6EDF3);
         }
