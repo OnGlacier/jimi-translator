@@ -3,10 +3,8 @@
 ## 组件
 
 ```
-MainActivity          配置页（橙色主题）：key / 端点 / 模型 / 方向 / 提示词 / 术语 / 开关；启动时自愈无障碍开关
+MainActivity          配置页（橙色主题）：key / 端点 / 模型 / 方向 / 提示词 / 术语 / 开关
 CaptureService        无障碍服务：截屏、调度、请求模型、去重、写浮窗（前台服务）
-A11y                  无障碍开关读写：是否启用、是否有自愈权限、写回设置
-ShizukuHelper         通过 Shizuku 以 shell 身份执行 pm grant（一键授权）
 Overlay               悬浮窗：卡片、按钮、译文流、透明度、显示原文、收起圆钮
 RegionPicker          全屏框选层：拖一个矩形，返回屏幕坐标
 Translator            模型调用：OpenAI 兼容 /chat/completions（流式 / 非流式）、JSON 抢救
@@ -60,13 +58,6 @@ word = 长度 ≥ 3 且非停用词的词集合
 | 模型回 `{"segments":[]}` | 视为「本屏已翻完」，不显示调试信息 |
 | 网关不支持 `response_format` / `thinking` | 自动降级重试（去掉字段再发一次） |
 
-## 后台与存活
-
-| 组件 | 类型 | 作用 |
-|---|---|---|
-| `CaptureService` | 无障碍服务 + 前台服务（`specialUse`） | 截屏与翻译；前台状态用于降低被系统清理的概率 |
-
-写回无障碍开关需要 `WRITE_SECURE_SETTINGS`（一次性 ADB / Shizuku / root 授权）——Android 不允许 App 自己打开自己的无障碍服务，这是唯一合规途径。没有轮询：只在 MainActivity 启动时检查并写回一次。
 
 ## 数据与隐私
 

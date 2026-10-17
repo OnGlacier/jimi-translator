@@ -1,18 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.rltranslator.overlay"
-    android:versionCode="39"
-    android:versionName="1.39">
+    android:versionCode="40"
+    android:versionName="1.40">
 
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- 可选：通过一次性 ADB/Shizuku 授权后，App 可以把自己被系统关掉的无障碍服务重新打开 -->
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
     <application
         android:allowBackup="false"
@@ -41,7 +36,6 @@
 
         <service
             android:name=".CaptureService"
-            android:foregroundServiceType="specialUse"
             android:description="@string/service_desc"
             android:exported="true"
             android:label="@string/service_label"
@@ -52,9 +46,6 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility" />
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Transparent screen translation overlay and accessibility screenshot capture" />
         </service>
     </application>
 </manifest>

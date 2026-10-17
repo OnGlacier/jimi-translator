@@ -64,25 +64,12 @@
 
 ColorOS / HyperOS 这类系统在「清理后台」时会把第三方无障碍服务一起关掉，表现就是「一关 App 就得重新开权限」。
 
-App 的做法很轻：
+**这个 App 不申请任何额外权限去对抗系统**——它是轻量工具，做法就是：
 
-1. **前台服务**：读屏服务以前台进程运行，比普通后台应用更不容易被清理（不申请通知权限，所以不会弹「基米翻译正在运行」的常驻通知）；
-2. **打开即自愈**：每次打开 App 时检查一次读屏服务是否还在，被关掉就写回去。
+1. 被关掉后，去「设置 → 无障碍 → 基米翻译 · 读屏服务」重新打开一次；
+2. 不想被频繁清理的话，把 App 的电池策略设为「不限制」，并在最近任务里下拉锁定。
 
-第 2 条需要一次性授权（`WRITE_SECURE_SETTINGS`），因为 Android 不允许 App 自己打开自己的无障碍服务。
-
-任选其一：
-
-```bash
-# ① 有电脑：USB 连上手机，在电脑终端执行
-adb shell pm grant com.rltranslator.overlay android.permission.WRITE_SECURE_SETTINGS
-
-# ② 装了 Shizuku：在 Shizuku 里打开终端（rish），执行同一条命令
-# ③ 设备已 root：直接
-su -c "pm grant com.rltranslator.overlay android.permission.WRITE_SECURE_SETTINGS"
-```
-
-授权是一次性的，之后重装 App 需要重新授权。没授权也不影响使用，只是被系统关掉时需要手动去设置里再打开一次。
+> 每次安装新版本，系统都会解绑无障碍服务，也要重开一次——这是 Android 行为。
 
 ---
 
