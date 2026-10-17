@@ -271,17 +271,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        Button heal = pill(root, "自动修复读屏服务（需一次性授权）", false);
-        heal.setOnClickListener(v -> {
-            if (!A11y.canSelfHeal(this)) {
-                Toast.makeText(this, "先授权一次：" + A11y.grantCommand(this), Toast.LENGTH_LONG).show();
-                return;
-            }
-            boolean ok = A11y.ensureEnabled(this);
-            Toast.makeText(this, ok ? "已写回设置，稍等一秒看状态" : "写入失败，可能被系统限制", Toast.LENGTH_SHORT).show();
-            statusView.postDelayed(this::refresh, 900);
-        });
-
         Button show = pill(root, "显示 / 收回浮窗", false);
         show.setOnClickListener(v -> {
             CaptureService service = CaptureService.get();
