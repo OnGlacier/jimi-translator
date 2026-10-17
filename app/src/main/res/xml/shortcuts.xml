@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="enable_a11y"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_enable_short"
+        android:shortcutLongLabel="@string/shortcut_enable_long">
+        <intent android:action="android.settings.ACCESSIBILITY_SETTINGS" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

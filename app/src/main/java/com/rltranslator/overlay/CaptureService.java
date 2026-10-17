@@ -45,18 +45,23 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
     protected void onServiceConnected() {
         super.onServiceConnected();
         instance = this;
-        dedupe.load(this);
-        overlay = new Overlay(this, this, dedupe);
-        overlay.show();
-        auto = Store.getBool(this, Store.KEY_AUTO, false);
-        overlay.setAuto(auto);
-        overlay.setStatus("待机");
-        if (auto) scheduleAuto(600);
+        try {
+            dedupe.load(this);
+            overlay = new Overlay(this, this, dedupe);
+            overlay.show();
+            auto = Store.getBool(this, Store.KEY_AUTO, false);
+            overlay.setAuto(auto);
+            overlay.setStatus("待机");
+            if (auto) scheduleAuto(600);
+        } catch (Throwable error) {
+            // 宁可少一个浮窗，也不能让服务崩溃——崩溃多了系统会直接把这个无障碍服务关掉
+            android.util.Log.e("JimiTranslator", "onServiceConnected failed", error);
+        }
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // 只为拿到服务实例；具体读屏走 takeScreenshot。
+        // 只为拿到服务实例；具体读屏走 takeScreenshot。这里绝不抛异常。
     }
 
     @Override
@@ -65,17 +70,23 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
 
     @Override
     public boolean onUnbind(Intent intent) {
-        instance = null;
-        if (overlay != null) overlay.hide();
+        try {
+            instance = null;
+            if (overlay != null) overlay.hide();
+        } catch (Throwable ignored) {
+        }
         return super.onUnbind(intent);
     }
 
     @Override
     public void onDestroy() {
-        instance = null;
-        handler.removeCallbacksAndMessages(null);
-        if (overlay != null) overlay.hide();
-        io.shutdownNow();
+        try {
+            instance = null;
+            handler.removeCallbacksAndMessages(null);
+            if (overlay != null) overlay.hide();
+            io.shutdownNow();
+        } catch (Throwable ignored) {
+        }
         super.onDestroy();
     }
 

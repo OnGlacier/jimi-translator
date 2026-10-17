@@ -40,7 +40,8 @@ public class MainActivity extends Activity {
     private CheckBox streamBox;
     private CheckBox thinkBox;
     private CheckBox catBox;
-    private android.widget.Spinner dirSpinner;
+    private int dirIndex;
+    private final java.util.List<Button> dirButtons = new java.util.ArrayList<>();
     private TextView statusView;
 
     private int dp(float value) {
@@ -136,6 +137,17 @@ public class MainActivity extends Activity {
         return box;
     }
 
+
+    /** 三个方向按钮：选中的用橙色实心。 */
+    private void paintDirection() {
+        for (int i = 0; i < dirButtons.size(); i++) {
+            Button item = dirButtons.get(i);
+            boolean selected = i == dirIndex;
+            item.setTextColor(selected ? Color.WHITE : ORANGE_DEEP);
+            item.setBackground(selected ? rounded(ORANGE, 14) : roundedStroke(0x00FFFFFF, ORANGE, 14));
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -218,16 +230,29 @@ public class MainActivity extends Activity {
         glossaryInput.setGravity(Gravity.TOP | Gravity.START);
 
         LinearLayout dirCard = card(root, "翻译方向");
-        dirSpinner = new android.widget.Spinner(this);
-        android.widget.ArrayAdapter<String> dirAdapter = new android.widget.ArrayAdapter<>(
-            this, android.R.layout.simple_spinner_item,
-            new String[] {"自动识别（英文→中文 / 中文→英文）", "英译中", "中译英"});
-        dirAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        dirSpinner.setAdapter(dirAdapter);
         String savedDir = Store.get(this, Store.KEY_DIRECTION, "auto");
-        dirSpinner.setSelection("en2zh".equals(savedDir) ? 1 : ("zh2en".equals(savedDir) ? 2 : 0));
-        dirCard.addView(dirSpinner, new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        dirIndex = "en2zh".equals(savedDir) ? 1 : ("zh2en".equals(savedDir) ? 2 : 0);
+        LinearLayout dirRow = new LinearLayout(this);
+        dirRow.setOrientation(LinearLayout.HORIZONTAL);
+        String[] dirLabels = {"自动", "英译中", "中译英"};
+        for (int i = 0; i < dirLabels.length; i++) {
+            final int index = i;
+            Button item = new Button(this);
+            item.setText(dirLabels[i]);
+            item.setAllCaps(false);
+            item.setTextSize(13.5f);
+            item.setOnClickListener(v -> {
+                dirIndex = index;
+                paintDirection();
+            });
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            if (i < dirLabels.length - 1) params.rightMargin = dp(8);
+            dirRow.addView(item, params);
+            dirButtons.add(item);
+        }
+        dirCard.addView(dirRow);
+        paintDirection();
 
         LinearLayout switchCard = card(root, "运行方式");
         streamBox = switchRow(switchCard, "流式输出（边生成边显示）", Store.KEY_STREAM, true);
@@ -243,6 +268,21 @@ public class MainActivity extends Activity {
                 startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
             } catch (Throwable error) {
                 Toast.makeText(this, "打不开系统设置：" + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+
+        Button battery = pill(root, "关闭电池优化（防止服务被系统关掉）", false);
+        battery.setOnClickListener(v -> {
+            try {
+                android.content.Intent intent = new android.content.Intent(
+                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    android.net.Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            } catch (Throwable error) {
+                try {
+                    startActivity(new android.content.Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+                } catch (Throwable ignored) {
+                }
             }
         });
 
@@ -296,7 +336,6 @@ public class MainActivity extends Activity {
         Store.putBool(this, Store.KEY_STREAM, streamBox == null || streamBox.isChecked());
         Store.putBool(this, Store.KEY_THINK, thinkBox != null && thinkBox.isChecked());
         Store.putBool(this, Store.KEY_CAT, catBox != null && catBox.isChecked());
-        int dirIndex = dirSpinner == null ? 0 : dirSpinner.getSelectedItemPosition();
         Store.put(this, Store.KEY_DIRECTION, dirIndex == 1 ? "en2zh" : (dirIndex == 2 ? "zh2en" : "auto"));
         String promptText = promptInput.getText().toString().trim();
         Store.put(this, Store.KEY_PROMPT, promptText.equals(Prompt.DEFAULT_SYSTEM.trim()) ? "" : promptText);
