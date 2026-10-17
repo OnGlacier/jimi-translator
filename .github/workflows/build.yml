@@ -1,4 +1,4 @@
-name: Build APK
+name: Build
 
 on:
   push:
@@ -7,6 +7,62 @@ on:
   pull_request:
 
 jobs:
+  # 1) Android APK（同时负责创建 Release）
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-35 build-tools;34.0.0"
+
+      - name: Build APK
+        run: bash scripts/build-apk.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jimi-translator-apk
+          path: build/app.apk
+
+      - name: Rename apk
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: cp build/app.apk "jimi-translator-${GITHUB_REF_NAME}.apk"
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: jimi-translator-${{ github.ref_name }}.apk
+          generate_release_notes: true
+          body: |
+            ## 基米翻译 ${{ github.ref_name }}
+
+            读屏翻译：只翻屏幕上**新出现**的内容，译文浮在原处。英译中 / 中译英双向。
+
+            | 平台 | 文件 | 说明 |
+            |---|---|---|
+            | Android | `jimi-translator-${{ github.ref_name }}.apk` | 直接安装，需要开启无障碍服务 |
+            | Windows | `jimi-translator-${{ github.ref_name }}-windows.exe` | 双击安装，自带 Java 运行时 |
+            | Linux | `*.deb` | `sudo apt install ./xxx.deb` |
+            | 任意（需 Java 17+） | `jimi-translator-desktop-${{ github.ref_name }}.jar` | `java -jar xxx.jar` |
+
+            - 📖 说明：https://github.com/${{ github.repository }}#readme
+            - 📝 更新日志：https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md
+            - 🛠 构建：https://github.com/${{ github.repository }}/blob/main/docs/BUILD.md
+
+            > Android 的 APK 由 CI 签名，和本地自行构建的签名不同，不能互相覆盖安装。
+            > Windows 安装包未做代码签名，首次运行如出现 SmartScreen 提示，点「更多信息 → 仍要运行」。
+
+  # 2) 桌面 jar（跑自检）
   desktop:
     runs-on: ubuntu-latest
     needs: build
@@ -26,68 +82,95 @@ jobs:
         with:
           name: jimi-translator-desktop
           path: desktop/build/jimi-translator.jar
-
       - name: Rename jar
         if: startsWith(github.ref, 'refs/tags/v')
         run: cp desktop/build/jimi-translator.jar "jimi-translator-desktop-${GITHUB_REF_NAME}.jar"
-
-      - name: Attach jar to release
+      - name: Attach jar
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: jimi-translator-desktop-${{ github.ref_name }}.jar
 
-  build:
+  # 3) Linux .deb
+  package-linux:
     runs-on: ubuntu-latest
+    needs: desktop
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
-      - uses: android-actions/setup-android@v3
+      - name: Install packaging tools
+        run: sudo apt-get update && sudo apt-get install -y fakeroot binutils
+      - name: Build jar
+        run: bash desktop/build.sh
+      - name: Package deb
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+'; then VERSION="1.0"; fi
+          mkdir -p dist
+          jpackage --type deb \
+            --name jimi-translator \
+            --app-version "$VERSION" \
+            --input desktop/build \
+            --main-jar jimi-translator.jar \
+            --main-class com.jimi.desktop.Main \
+            --linux-shortcut \
+            --dest dist
+          ls -la dist
+      - uses: actions/upload-artifact@v4
         with:
-          packages: "platforms;android-35 build-tools;34.0.0"
-
-      - name: Build
-        run: bash scripts/build-apk.sh
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jimi-translator-apk
-          path: build/app.apk
-
-      - name: Rename asset
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: cp build/app.apk "jimi-translator-${GITHUB_REF_NAME}.apk"
-
-      - name: Attach to release
+          name: jimi-translator-deb
+          path: dist/*.deb
+      - name: Attach deb
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: jimi-translator-${{ github.ref_name }}.apk
-          generate_release_notes: true
-          body: |
-            ## 基米翻译 ${{ github.ref_name }}
+          files: dist/*.deb
 
-            读屏英译中的 Android 悬浮翻译器：只翻屏幕上**新出现**的英文，中文浮在原页上。
-
-            - 📦 **下载**：见下方 Assets 里的 `jimi-translator-${{ github.ref_name }}.apk`
-            - 📖 **说明**：https://github.com/${{ github.repository }}#readme
-            - 📝 **更新日志**：https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md
-            - 🛠 **自己构建**：https://github.com/${{ github.repository }}/blob/main/docs/BUILD.md
-
-            ### 安装
-
-            1. 允许「未知来源」安装，装上后打开 App；
-            2. 填模型 API key（默认 DeepSeek：`https://api.deepseek.com/v1` + `deepseek-flash`）；
-            3. 点「权限设置（开启无障碍服务）」→ 打开「基米翻译 · 读屏服务」；
-            4. 浮窗出现后，点「框选」圈一段，或点「自动」整屏跟读。
-
-            > ⚠️ Release 里的 APK 由 CI 签名，与本地自行构建的版本签名不同，不能互相覆盖安装。
-            
+  # 4) Windows .exe
+  package-windows:
+    runs-on: windows-latest
+    needs: package-linux
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install WiX
+        shell: powershell
+        run: choco install wixtoolset --no-progress -y
+      - name: Build jar
+        shell: cmd
+        run: desktop\build.bat
+      - name: Package exe
+        shell: cmd
+        run: |
+          set VERSION=%GITHUB_REF_NAME:~1%
+          if "%VERSION%"=="" set VERSION=1.0
+          if not exist dist mkdir dist
+          jpackage --type exe --name JimiTranslator --app-version %VERSION% ^
+            --input desktop\build --main-jar jimi-translator.jar ^
+            --main-class com.jimi.desktop.Main ^
+            --win-shortcut --win-menu --win-dir-chooser ^
+            --dest dist
+          dir dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jimi-translator-exe
+          path: dist/*.exe
+      - name: Rename exe
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: cmd
+        run: move dist\*.exe "jimi-translator-${{ github.ref_name }}-windows.exe"
+      - name: Attach exe
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: jimi-translator-${{ github.ref_name }}-windows.exe

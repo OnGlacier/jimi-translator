@@ -5,6 +5,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -48,6 +50,11 @@ final class Overlay {
     private static final Color CHIP_BG = new Color(42, 51, 63);
     private static final Color ACCENT = new Color(0xF5, 0x9E, 0x0B);
 
+    private static final int DEFAULT_WIDTH = 470;
+    private static final int DEFAULT_HEIGHT = 430;
+    private java.awt.Rectangle restoreBounds;
+    private boolean maximized;
+
     private final Host host;
     private JFrame frame;
     private JPanel root;
@@ -85,7 +92,7 @@ final class Overlay {
         frame.setUndecorated(true);
         frame.setAlwaysOnTop(true);
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        frame.setSize(430, 420);
+        frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         frame.setLocationRelativeTo(null);
         if (translucentSupported()) {
             frame.setBackground(new Color(0, 0, 0, 0));
@@ -125,17 +132,18 @@ final class Overlay {
         left.add(statusLabel, BorderLayout.CENTER);
         header.add(left, BorderLayout.CENTER);
 
-        JLabel moreChip = chip("不透明度", false);
-        moreChip.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                moreRow.setVisible(!moreRow.isVisible());
-                root.revalidate();
-            }
-        });
-        header.add(moreChip, BorderLayout.EAST);
+        JLabel fullChip = chip("⛶", false);
+        fullChip.setToolTipText("放大到全屏 / 还原（双击标题栏也行）");
+        fullChip.addMouseListener(click(this::toggleMaximize));
+        header.add(fullChip, BorderLayout.EAST);
         header.addMouseListener(new DragHandler());
         header.addMouseMotionListener(new DragHandler());
+        title.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() == 2) toggleMaximize();
+            }
+        });
 
         // ---- 按钮行 ----
         JPanel actions = new JPanel();
@@ -149,6 +157,11 @@ final class Overlay {
         autoChip.addMouseListener(click(host::onToggleAuto));
         directionChip = chip(labelFor(direction), false);
         directionChip.addMouseListener(click(this::cycleDirection));
+        JLabel alphaChip = chip("不透明度", false);
+        alphaChip.addMouseListener(click(() -> {
+            moreRow.setVisible(!moreRow.isVisible());
+            root.revalidate();
+        }));
         JLabel clearChip = chip("清空", false);
         clearChip.addMouseListener(click(host::onClear));
         JLabel closeChip = chip("收起", false);
@@ -159,6 +172,8 @@ final class Overlay {
         actions.add(autoChip);
         actions.add(Box.createHorizontalStrut(6));
         actions.add(directionChip);
+        actions.add(Box.createHorizontalStrut(6));
+        actions.add(alphaChip);
         actions.add(Box.createHorizontalStrut(6));
         actions.add(clearChip);
         actions.add(Box.createHorizontalStrut(6));
@@ -225,8 +240,45 @@ final class Overlay {
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.getVerticalScrollBar().setUnitIncrement(24);
 
+        JLabel grip = new JLabel("◢");
+        grip.setForeground(new Color(255, 255, 255, 70));
+        grip.setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+        grip.setToolTipText("拖动右下角调整大小");
+        grip.setBorder(BorderFactory.createEmptyBorder(0, 0, -2, 0));
+        MouseAdapter resizeHandler = new MouseAdapter() {
+            private java.awt.Point start;
+            private Dimension size;
+
+            @Override
+            public void mousePressed(MouseEvent event) {
+                start = event.getPoint();
+                size = frame.getSize();
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent event) {
+                if (start == null || size == null) return;
+                maximized = false;
+                int width = Math.max(320, size.width + event.getX() - start.x);
+                int height = Math.max(240, size.height + event.getY() - start.y);
+                frame.setSize(width, height);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent event) {
+                start = null;
+            }
+        };
+        grip.addMouseListener(resizeHandler);
+        grip.addMouseMotionListener(resizeHandler);
+
+        JPanel south = new JPanel(new BorderLayout());
+        south.setOpaque(false);
+        south.add(grip, BorderLayout.EAST);
+
         root.add(top, BorderLayout.NORTH);
         root.add(scroll, BorderLayout.CENTER);
+        root.add(south, BorderLayout.SOUTH);
 
         frame.setContentPane(root);
     }
@@ -318,7 +370,7 @@ final class Overlay {
     void expand() {
         collapsed = false;
         SwingUtilities.invokeLater(() -> {
-            frame.setSize(430, 420);
+            frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             frame.setContentPane(root);
             root.revalidate();
             frame.toFront();
@@ -360,6 +412,19 @@ final class Overlay {
             }
         });
         return panel;
+    }
+
+    void toggleMaximize() {
+        if (maximized) {
+            frame.setBounds(restoreBounds == null ? new java.awt.Rectangle(frame.getLocation(), new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT)) : restoreBounds);
+            maximized = false;
+        } else {
+            restoreBounds = frame.getBounds();
+            Rectangle screen = Screen.bounds();
+            frame.setBounds(screen);
+            maximized = true;
+        }
+        frame.validate();
     }
 
     private final class DragHandler extends MouseAdapter {
