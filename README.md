@@ -5,25 +5,31 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Size](https://img.shields.io/badge/APK-64%20KB-F59E0B)](https://github.com/OnGlacier/jimi-translator/releases/latest)
 
-> **不用截图、不用切窗口：屏幕上是什么，中文就浮在它上面。**
-> Android 悬浮窗 + Windows / Linux 桌面版 · 英译中 / 中译英双向 · 只翻新出现的段落 · 不注册不登录 · 自带模型 key。
+> **两种用法，一种比一种省事：**
+> **框选**——指哪翻哪，一块区域、一张图、界面上一行字都行；
+> **自动**——开一次，它跟着你滚动，整屏内容自己翻。
+>
+> **自带 API**：填你自己的 key，DeepSeek / OpenAI / 任何 OpenAI 兼容接口都能接，模型自己选。
+> 没有账号、没有中转服务器，请求只发到你填的那个地址。
 
-**谁在什么时候用它**
+**为什么用它**
 
-- 读英文 PDF / 论文 / 教材，不想在 PDF 和翻译网站之间来回切；
-- 看英文网页、英文软件界面、报错日志，想直接看懂；
-- 看中文内容想快速得到英文（写英文邮件、给外国同事看）；
-- 想要「翻过的不重复翻」——往下滚一屏，只出新内容。
+1. **框选**：屏幕上任意一块，拖个矩形就出译文——PDF 段落、软件界面、报错日志、图片里的字，不用复制、不用切窗口；
+2. **自动**：不打断阅读，你往下滚，它接着翻，译文一直浮在原文上面；
+3. **自接 API**：key 只存在本机，接口地址和模型名都能改；想换便宜的、换更强的，改一行就行；
+4. **全平台**：Android 悬浮窗 + Windows / Linux 桌面应用，一个仓库两套实现，用同一个 key。
 
 **和常见做法的区别**
 
 | | 截图 + 网页翻译 | 浏览器翻译插件 | 划词翻译 App | **基米翻译** |
 |---|---|---|---|---|
-| 不切窗口 | ❌ 要复制粘贴 | 只限浏览器 | 需要选中文字 | ✅ 悬浮窗直接浮在原处 |
-| 只翻新内容、不重复 | ❌ | ❌ | ❌ | ✅ 句子级去重 |
+| **框选任意区域翻译** | ❌ 要截图再上传 | ❌ | 部分 | ✅ 拖个矩形，指哪翻哪 |
+| **自动跟读整屏** | ❌ | 只能整页翻 | ❌ | ✅ 开着就不用管，跟着滚动翻 |
+| **自带 API / 自选模型** | ❌ 用它的服务 | ❌ | ❌ | ✅ 任意 OpenAI 兼容端点 + 模型名 |
+| 不切窗口 | ❌ | 只限浏览器 | 需选中文字 | ✅ 译文浮在原处 |
 | PDF / 图片 / 软件界面 | 部分 | ❌ | 部分 | ✅ 直接读屏幕像素 |
 | 中译英 | 看工具 | 少 | 少 | ✅ 双向 |
-| 隐私 | 文本发到第三方 | — | — | ✅ 只发给你自己的模型接口，无账号无云端 |
+| 隐私 | 文本发到第三方 | — | — | ✅ 只发给你自己填的接口，无账号无云端 |
 
 不注册、不登录、没有云端；Android 是一个约 64 KB 的 APK，桌面版是自带运行时的安装包（Windows exe / Linux deb）。
 
@@ -228,7 +234,7 @@ extras/dsh-plugin/         早期 DSH 网页插件原型，保留作参考
 论文翻译 · 英译中 · 中译英 · 英中互译 · 桌面翻译 · Windows 翻译工具 · Linux 翻译工具 ·
 学术阅读辅助 · 强化学习 / 机器学习论文阅读 · DeepSeek 视觉模型 · 自建翻译
 
-关键词（方便搜索）：`screen translator` `screen translation overlay` `PDF translation`
+关键词（方便搜索）：`screen translator` `bring your own API` `OpenAI compatible` `screen translation overlay` `PDF translation`
 `academic translation` `English to Chinese` `Chinese to English` `DeepSeek` `accessibility service`
 `Windows translator` `Linux translator` `screenshot translation` `OCR translation`
 
