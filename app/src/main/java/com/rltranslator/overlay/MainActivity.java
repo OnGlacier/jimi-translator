@@ -19,7 +19,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import rikka.shizuku.Shizuku;
 
 /** 配置页：哈基米配色 + 猫猫头，功能不变。 */
 public class MainActivity extends Activity {
@@ -153,7 +152,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        installShizukuUi();
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -265,26 +263,6 @@ public class MainActivity extends Activity {
         Button save = pill(root, "保存设置", true);
         save.setOnClickListener(v -> save());
 
-        Button shizuku = pill(root, "用 Shizuku 一键授权", false);
-        shizuku.setOnClickListener(v -> {
-            if (!ShizukuHelper.isReady()) {
-                Toast.makeText(this, "Shizuku 未运行：先安装并启动 Shizuku，再回来点这里",
-                    Toast.LENGTH_LONG).show();
-                return;
-            }
-            if (ShizukuHelper.hasPermission()) {
-                boolean ok = ShizukuHelper.grantSecureSettings(this);
-                Toast.makeText(this, ok ? "已授权，读屏掉线会自动恢复" : "执行失败，可能被系统限制",
-                    Toast.LENGTH_SHORT).show();
-                if (ok) A11y.ensureEnabled(this);
-                statusView.postDelayed(this::refresh, 600);
-                return;
-            }
-            if (!ShizukuHelper.requestPermission()) {
-                Toast.makeText(this, "无法请求 Shizuku 权限", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         Button accessibility = pill(root, "权限设置（开启无障碍服务）", false);
         accessibility.setOnClickListener(v -> {
             try {
@@ -384,28 +362,6 @@ public class MainActivity extends Activity {
             return enabled != null && enabled.contains(getPackageName());
         } catch (Throwable error) {
             return false;
-        }
-    }
-
-    /** Shizuku 授权结果回调：允许后立刻执行 pm grant 并刷新状态。 */
-    private void installShizukuUi() {
-        try {
-            if (!ShizukuHelper.isReady()) return;
-            Shizuku.addRequestPermissionResultListener((requestCode, grantResult) -> {
-                if (requestCode != ShizukuHelper.REQUEST_CODE) return;
-                if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    boolean ok = ShizukuHelper.grantSecureSettings(this);
-                    Toast.makeText(this, ok ? "已授权，读屏掉线会自动恢复" : "授权命令执行失败",
-                        Toast.LENGTH_SHORT).show();
-                    if (ok) {
-                        A11y.ensureEnabled(this);
-                    }
-                    statusView.postDelayed(this::refresh, 600);
-                } else {
-                    Toast.makeText(this, "你拒绝了 Shizuku 授权", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } catch (Throwable ignored) {
         }
     }
 

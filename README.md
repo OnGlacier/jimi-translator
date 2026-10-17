@@ -71,9 +71,7 @@ App 的做法很轻：
 
 第 2 条需要一次性授权（`WRITE_SECURE_SETTINGS`），因为 Android 不允许 App 自己打开自己的无障碍服务。
 
-**最省事的方式：App 内点「用 Shizuku 一键授权」**（需要先安装并启动 [Shizuku](https://shizuku.rikka.app/)，点一下允许即可，不用电脑、不用终端）。
-
-也可以用命令行，任选其一：
+任选其一：
 
 ```bash
 # ① 有电脑：USB 连上手机，在电脑终端执行
