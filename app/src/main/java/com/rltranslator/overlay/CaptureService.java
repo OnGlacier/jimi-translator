@@ -306,6 +306,7 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
         String key = Store.get(this, Store.KEY_API, "");
         String model = Store.get(this, Store.KEY_MODEL, Store.DEFAULT_MODEL);
         String systemPrompt = Store.get(this, Store.KEY_PROMPT, "");
+        String direction = Store.get(this, Store.KEY_DIRECTION, "auto");
         String glossary = Store.get(this, Store.KEY_GLOSSARY, "");
         byte[] jpeg;
         byte[] regionJpeg = null;
@@ -336,18 +337,18 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
 
         io.execute(() -> {
             Translator.Result result = Translator.translate(base, key, model, jpeg, known, thinkMode,
-                systemPrompt, glossary, stream, regionMode, regionForRequest, chunk -> handler.post(() -> {
+                systemPrompt, glossary, stream, regionMode, regionForRequest, direction, chunk -> handler.post(() -> {
                     if (chunk == null || chunk.isEmpty()) return;
                     int fresh = 0;
                     java.util.List<Translator.Segment> ordered = new java.util.ArrayList<>(chunk);
                     ordered.sort((a, b) -> Integer.compare(a.order == 0 ? 9999 : a.order, b.order == 0 ? 9999 : b.order));
                     for (Translator.Segment segment : ordered) {
-                        String mark = Dedupe.normalize(segment.en);
+                        String mark = Dedupe.normalize(segment.src);
                         if (addedThisCall.contains(mark)) continue;
-                        if (dedupe.isDuplicate(segment.en)) { skipped[0]++; continue; }
-                        dedupe.remember(segment.en);
+                        if (dedupe.isDuplicate(segment.src)) { skipped[0]++; continue; }
+                        dedupe.remember(segment.src);
                         addedThisCall.add(mark);
-                        if (overlay != null) overlay.addEntry(segment.en, segment.zh);
+                        if (overlay != null) overlay.addEntry(segment.src, segment.dst);
                         added[0]++;
                         fresh++;
                     }
@@ -365,12 +366,12 @@ public class CaptureService extends AccessibilityService implements Overlay.Host
                     java.util.List<Translator.Segment> sorted = new java.util.ArrayList<>(result.segments);
                     sorted.sort((a, b) -> Integer.compare(a.order == 0 ? 9999 : a.order, b.order == 0 ? 9999 : b.order));
                     for (Translator.Segment segment : sorted) {
-                        String mark = Dedupe.normalize(segment.en);
+                        String mark = Dedupe.normalize(segment.src);
                         if (addedThisCall.contains(mark)) continue;
-                        if (dedupe.isDuplicate(segment.en)) { skipped[0]++; continue; }
-                        dedupe.remember(segment.en);
+                        if (dedupe.isDuplicate(segment.src)) { skipped[0]++; continue; }
+                        dedupe.remember(segment.src);
                         addedThisCall.add(mark);
-                        if (overlay != null) overlay.addEntry(segment.en, segment.zh);
+                        if (overlay != null) overlay.addEntry(segment.src, segment.dst);
                         added[0]++;
                         if (added[0] >= 60) break;
                     }

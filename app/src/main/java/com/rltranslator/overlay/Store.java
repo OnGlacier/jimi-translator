@@ -20,6 +20,7 @@ final class Store {
     static final String KEY_GLOSSARY = "glossary";
     static final String KEY_STREAM = "streamMode";
     static final String KEY_CAT = "catTheme";
+    static final String KEY_DIRECTION = "direction";
 
     static final String DEFAULT_BASE = "https://api.deepseek.com/v1";
     static final String DEFAULT_MODEL = "deepseek-flash";

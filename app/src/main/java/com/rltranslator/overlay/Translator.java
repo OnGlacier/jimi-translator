@@ -19,18 +19,20 @@ import java.util.List;
 final class Translator {
 
     static final class Segment {
-        final String en;
-        final String zh;
+        /** 原文（可能是英文也可能是中文，由翻译方向决定）。 */
+        final String src;
+        /** 译文（与 src 相反的语言）。 */
+        final String dst;
         /** 模型给的段序（1 起，从上到下）；0 表示没给。 */
         final int order;
 
-        Segment(String en, String zh) {
-            this(en, zh, 0);
+        Segment(String src, String dst) {
+            this(src, dst, 0);
         }
 
-        Segment(String en, String zh, int order) {
-            this.en = en;
-            this.zh = zh;
+        Segment(String src, String dst, int order) {
+            this.src = src;
+            this.dst = dst;
             this.order = order;
         }
     }
@@ -73,7 +75,8 @@ final class Translator {
 
     private static JSONObject buildBody(String model, byte[] jpeg, List<String> known, boolean jsonMode,
                                         boolean thinkingOff, String priorAssistant,
-                                        String systemPrompt, String glossary, boolean regionMode, byte[] regionJpeg) throws Exception {
+                                        String systemPrompt, String glossary, boolean regionMode, byte[] regionJpeg,
+                                        String direction) throws Exception {
         JSONObject body = new JSONObject();
         body.put("model", model);
         body.put("temperature", 0.15);
@@ -92,7 +95,7 @@ final class Translator {
         JSONArray content = new JSONArray();
         JSONObject text = new JSONObject();
         text.put("type", "text");
-        text.put("text", Prompt.user(known, glossary, regionMode));
+        text.put("text", Prompt.user(direction, known, glossary, regionMode));
         content.put(text);
         JSONObject image = new JSONObject();
         image.put("type", "image_url");
@@ -164,15 +167,15 @@ final class Translator {
     /** 统一入口：能流式就流式，先把出来的一段段显示出来。 */
     static Result translate(String baseUrl, String apiKey, String model, byte[] jpeg, List<String> known,
                             boolean thinkMode, String systemPrompt, String glossary, boolean stream, boolean regionMode,
-                            byte[] regionJpeg, Progress progress) {
+                            byte[] regionJpeg, String direction, Progress progress) {
         if (!stream) {
-            return translateOnce(baseUrl, apiKey, model, jpeg, known, thinkMode, systemPrompt, glossary, regionMode, regionJpeg);
+            return translateOnce(baseUrl, apiKey, model, jpeg, known, thinkMode, systemPrompt, glossary, regionMode, regionJpeg, direction);
         }
         Result result = new Result();
         HttpURLConnection conn = null;
         try {
             String url = (baseUrl.endsWith("/") ? baseUrl : baseUrl + "/") + "chat/completions";
-            JSONObject body = buildBody(model, jpeg, known, true, !thinkMode, null, systemPrompt, glossary, regionMode, regionJpeg);
+            JSONObject body = buildBody(model, jpeg, known, true, !thinkMode, null, systemPrompt, glossary, regionMode, regionJpeg, direction);
             body.put("stream", true);
             byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
             conn = (HttpURLConnection) new URL(url).openConnection();
@@ -243,17 +246,17 @@ final class Translator {
 
     static Result translateOnce(String baseUrl, String apiKey, String model, byte[] jpeg, List<String> known,
                                 boolean thinkMode, String systemPrompt, String glossary, boolean regionMode,
-                                byte[] regionJpeg) {
+                                byte[] regionJpeg, String direction) {
         Result result = new Result();
         try {
             String url = (baseUrl.endsWith("/") ? baseUrl : baseUrl + "/") + "chat/completions";
-            Reply reply = send(url, apiKey, buildBody(model, jpeg, known, true, !thinkMode, null, systemPrompt, glossary, regionMode, regionJpeg));
+            Reply reply = send(url, apiKey, buildBody(model, jpeg, known, true, !thinkMode, null, systemPrompt, glossary, regionMode, regionJpeg, direction));
             // 网关不认某个字段就逐级降级：先去掉 thinking，再去掉 response_format
             if (!ok(reply) && mentions(reply, "thinking")) {
-                reply = send(url, apiKey, buildBody(model, jpeg, known, true, false, null, systemPrompt, glossary, regionMode, regionJpeg));
+                reply = send(url, apiKey, buildBody(model, jpeg, known, true, false, null, systemPrompt, glossary, regionMode, regionJpeg, direction));
             }
             if (!ok(reply) && (mentions(reply, "response_format") || mentions(reply, "json_object"))) {
-                reply = send(url, apiKey, buildBody(model, jpeg, known, false, false, null, systemPrompt, glossary, regionMode, regionJpeg));
+                reply = send(url, apiKey, buildBody(model, jpeg, known, false, false, null, systemPrompt, glossary, regionMode, regionJpeg, direction));
             }
             if (reply.code < 200 || reply.code >= 300) {
                 result.error = "HTTP " + reply.code + "：" + shorten(reply.body, 220);
@@ -291,7 +294,7 @@ final class Translator {
             if (!result.parsed && !message.trim().isEmpty()) {
                 // 模型写了分析而不是 JSON：带着它自己的话再要求一次，通常第二次就老实了
                 try {
-                    JSONObject repairBody = buildBody(model, jpeg, known, false, !thinkMode, message, systemPrompt, glossary, regionMode, regionJpeg);
+                    JSONObject repairBody = buildBody(model, jpeg, known, false, !thinkMode, message, systemPrompt, glossary, regionMode, regionJpeg, direction);
                     Reply repairReply = send(url, apiKey, repairBody);
                     if (repairReply.code >= 200 && repairReply.code < 300) {
                         JSONObject repairJson = new JSONObject(repairReply.body);
@@ -339,14 +342,14 @@ final class Translator {
         List<Segment> out = new ArrayList<>();
         if (raw == null) return out;
         java.util.regex.Matcher matcher = java.util.regex.Pattern
-            .compile("\\{[^{}]*?\"en\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"[^{}]*?\"zh\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"")
+            .compile("\\{[^{}]*?\"(?:src|en)\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"[^{}]*?\"(?:dst|zh)\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"")
             .matcher(raw);
         java.util.regex.Pattern orderPattern = java.util.regex.Pattern.compile("\"i\"\\s*:\\s*(\\d+)");
         while (matcher.find()) {
             try {
                 JSONObject item = new JSONObject("{\"en\":\"" + matcher.group(1) + "\",\"zh\":\"" + matcher.group(2) + "\"}");
-                String en = item.optString("en", "");
-                String zh = item.optString("zh", "");
+                String en = item.optString("src", item.optString("en", ""));
+                String zh = item.optString("dst", item.optString("zh", ""));
                 if (en.trim().isEmpty() || zh.trim().isEmpty()) continue;
                 java.util.regex.Matcher orderMatcher = orderPattern.matcher(matcher.group());
                 int order = orderMatcher.find() ? Integer.parseInt(orderMatcher.group(1)) : 0;
@@ -397,8 +400,8 @@ final class Translator {
             for (int i = 0; i < list.length(); i++) {
                 JSONObject item = list.optJSONObject(i);
                 if (item == null) continue;
-                String en = item.optString("en", item.optString("src", ""));
-                String zh = item.optString("zh", item.optString("zh_cn", ""));
+                String en = item.optString("src", item.optString("en", ""));
+                String zh = item.optString("dst", item.optString("zh", item.optString("zh_cn", "")));
                 if (en.trim().isEmpty() || zh.trim().isEmpty()) continue;
                 out.add(new Segment(en.trim(), zh.trim(), item.optInt("i", 0)));
             }

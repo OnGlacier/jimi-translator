@@ -45,12 +45,12 @@ $AAPT2 link -o "$OUT/base.apk" -I "$JAR" \
 echo "== javac"
 find "$APP/java" -name '*.java' > "$OUT/sources.txt"
 [ -d "$OUT/gen" ] && find "$OUT/gen" -name '*.java' >> "$OUT/sources.txt" || true
-javac -J-Xmx256m -source 8 -target 8 -encoding UTF-8 -nowarn \
+javac -J-Xmx192m -J-XX:+UseSerialGC -J-XX:TieredStopAtLevel=1 -source 8 -target 8 -encoding UTF-8 -nowarn \
   -classpath "$JAR" -d "$OUT/classes" @"$OUT/sources.txt"
 
 echo "== d8"
 find "$OUT/classes" -name '*.class' > "$OUT/classes.txt"
-java -Xmx256m -cp "$BT/lib/d8.jar" com.android.tools.r8.D8 \
+java -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -cp "$BT/lib/d8.jar" com.android.tools.r8.D8 \
   --lib "$JAR" --min-api 30 --output "$OUT/dex" $(tr '\n' ' ' < "$OUT/classes.txt")
 
 echo "== package"

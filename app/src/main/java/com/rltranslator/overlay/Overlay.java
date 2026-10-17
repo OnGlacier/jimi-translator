@@ -495,36 +495,36 @@ final class Overlay {
         if (statsView != null) statsView.setText(text);
     }
 
-    void addEntry(String en, String zh) {
+    void addEntry(String sourceText, String translation) {
         if (feed == null) return;
         LinearLayout item = new LinearLayout(ctx);
         item.setOrientation(LinearLayout.VERTICAL);
         item.setPadding(0, 0, 0, dp(14));
 
-        // 先给英文原句：让用户一眼看出这段中文对应页面上的哪一句
-        if (en != null && !en.trim().isEmpty()) {
-            TextView source = new TextView(ctx);
-            source.setText(en.trim());
-            source.setTextSize(11f);
-            source.setTextColor(0xFF8B98A9);
-            source.setMaxLines(2);
-            source.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            source.setLineSpacing(dp(2), 1f);
-            source.setVisibility(bilingual ? View.VISIBLE : View.GONE);
-            styleText(source, false);
-            englishViews.add(source);
-            item.addView(source);
+        // 先给原文：让用户一眼看出这段译文对应页面上的哪一句
+        if (sourceText != null && !sourceText.trim().isEmpty()) {
+            TextView originView = new TextView(ctx);
+            originView.setText(sourceText.trim());
+            originView.setTextSize(11f);
+            originView.setTextColor(0xFF8B98A9);
+            originView.setMaxLines(2);
+            originView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            originView.setLineSpacing(dp(2), 1f);
+            originView.setVisibility(bilingual ? View.VISIBLE : View.GONE);
+            styleText(originView, false);
+            englishViews.add(originView);
+            item.addView(originView);
         }
 
-        TextView body = new TextView(ctx);
-        body.setText(zh);
-        body.setTextSize(16f);
-        body.setTextColor(0xFFE6EDF3);
-        body.setLineSpacing(dp(4), 1f);
-        body.setPadding(0, dp(3), 0, 0);
-        styleText(body, true);
-        bodyViews.add(body);
-        item.addView(body);
+        TextView bodyView = new TextView(ctx);
+        bodyView.setText(translation);
+        bodyView.setTextSize(16f);
+        bodyView.setTextColor(0xFFE6EDF3);
+        bodyView.setLineSpacing(dp(4), 1f);
+        bodyView.setPadding(0, dp(3), 0, 0);
+        styleText(bodyView, true);
+        bodyViews.add(bodyView);
+        item.addView(bodyView);
 
         feed.addView(item);
         scroll.post(() -> scroll.fullScroll(View.FOCUS_DOWN));

@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
     private CheckBox streamBox;
     private CheckBox thinkBox;
     private CheckBox catBox;
+    private android.widget.Spinner dirSpinner;
     private TextView statusView;
 
     private int dp(float value) {
@@ -216,6 +217,18 @@ public class MainActivity extends Activity {
         glossaryInput.setMinLines(3);
         glossaryInput.setGravity(Gravity.TOP | Gravity.START);
 
+        LinearLayout dirCard = card(root, "翻译方向");
+        dirSpinner = new android.widget.Spinner(this);
+        android.widget.ArrayAdapter<String> dirAdapter = new android.widget.ArrayAdapter<>(
+            this, android.R.layout.simple_spinner_item,
+            new String[] {"自动识别（英文→中文 / 中文→英文）", "英译中", "中译英"});
+        dirAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        dirSpinner.setAdapter(dirAdapter);
+        String savedDir = Store.get(this, Store.KEY_DIRECTION, "auto");
+        dirSpinner.setSelection("en2zh".equals(savedDir) ? 1 : ("zh2en".equals(savedDir) ? 2 : 0));
+        dirCard.addView(dirSpinner, new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
         LinearLayout switchCard = card(root, "运行方式");
         streamBox = switchRow(switchCard, "流式输出（边生成边显示）", Store.KEY_STREAM, true);
         thinkBox = switchRow(switchCard, "精译模式（开思考，慢一些但更准）", Store.KEY_THINK, false);
@@ -283,6 +296,8 @@ public class MainActivity extends Activity {
         Store.putBool(this, Store.KEY_STREAM, streamBox == null || streamBox.isChecked());
         Store.putBool(this, Store.KEY_THINK, thinkBox != null && thinkBox.isChecked());
         Store.putBool(this, Store.KEY_CAT, catBox != null && catBox.isChecked());
+        int dirIndex = dirSpinner == null ? 0 : dirSpinner.getSelectedItemPosition();
+        Store.put(this, Store.KEY_DIRECTION, dirIndex == 1 ? "en2zh" : (dirIndex == 2 ? "zh2en" : "auto"));
         String promptText = promptInput.getText().toString().trim();
         Store.put(this, Store.KEY_PROMPT, promptText.equals(Prompt.DEFAULT_SYSTEM.trim()) ? "" : promptText);
         Store.put(this, Store.KEY_GLOSSARY, glossaryInput.getText().toString().trim());
