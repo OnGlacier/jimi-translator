@@ -74,6 +74,21 @@ ColorOS / HyperOS 这类系统在「清理后台」时会把第三方无障碍�
 
 > 每次安装新版本，系统都会解绑无障碍服务，也要重开一次——这是 Android 行为。
 
+### 进阶：理论上可以用 Shizuku 做到「自动恢复」
+
+Android 不允许 App 自己重新打开自己的无障碍服务，但允许它**写回系统设置**——前提是先拿到
+`WRITE_SECURE_SETTINGS`。拿到的方式是用 Shizuku（或 ADB / root）以 shell 身份执行一次：
+
+```bash
+pm grant com.rltranslator.overlay android.permission.WRITE_SECURE_SETTINGS
+```
+
+之后 App 就能在发现读屏被关掉时把开关写回去，做到「打开 App 即恢复」。
+
+**本项目没有内置这套逻辑**：它是轻量工具，不想为此申请额外权限、加常驻服务、或依赖 Shizuku。
+如果确实需要，可以在历史里找到尝试过的实现（tag `v1.38` 的 `ShizukuHelper` / `A11y` 两个类，
+当时因启动崩溃回退），自行改造；也可以只按上面的命令授权后，写一个几十行的自定义版本。
+
 ---
 
 ## 工作原理（30 秒版）

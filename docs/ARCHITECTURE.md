@@ -59,6 +59,13 @@ word = 长度 ≥ 3 且非停用词的词集合
 | 网关不支持 `response_format` / `thinking` | 自动降级重试（去掉字段再发一次） |
 
 
+## 已知限制
+
+- **无障碍服务被 ROM 关掉后无法自动恢复**：Android 不允许 App 自己打开自己的无障碍服务。
+  唯一的合规路径是先拿到 `WRITE_SECURE_SETTINGS`（Shizuku / ADB / root 一次性授权），
+  再写回 `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES`。本项目为保持轻量没有内置，
+  历史版本 `v1.38` 有参考实现（`ShizukuHelper` + `A11y`，当时因启动崩溃回退）。
+
 ## 数据与隐私
 
 - API key、提示词、术语、去重表全部存在 App 私有 `SharedPreferences`；
