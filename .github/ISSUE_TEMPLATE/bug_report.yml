@@ -1,0 +1,46 @@
+name: Bug 报告
+description: 翻译不出来、浮窗异常、闪退等
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请尽量把下面几项填全，尤其是**浮窗里的提示文字**和**机型/系统版本**。
+  - type: input
+    id: version
+    attributes:
+      label: 基米翻译版本
+      description: 例如 v1.26（APK 文件名里的版本号）
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 设备与系统
+      placeholder: OPPO Pad 3 / Android 15 (ColorOS 15)
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: 模型与接口
+      placeholder: deepseek-flash @ https://api.deepseek.com/v1
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 现象
+      description: 浮窗里显示的红字/橙字是什么？点「自动」还是「框选」出的问题？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开 Zotero 的 PDF 页
+        2. 点框选，圈住第 2 段
+        3. 浮窗显示「本屏没有新正文」
+    validations:
+      required: true

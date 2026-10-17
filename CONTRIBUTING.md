@@ -6,10 +6,10 @@
 
    ```bash
    export ANDROID_HOME=/path/to/android-sdk
-   bash app/build.sh
+   bash scripts/build-apk.sh
    ```
 
-   看到 `BUILD_OK` 和 `app/out/app.apk` 才算过。
+   看到 `BUILD_OK` 和 `build/app.apk` 才算过。
 
 2. 真机自测（如果改的是读屏/悬浮窗）：
    - 装 APK → 开无障碍服务 → 框选一段英文 → 能出中文；

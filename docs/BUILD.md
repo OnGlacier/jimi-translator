@@ -17,27 +17,37 @@
 > qemu-x86_64-static -L /path/to/x86_64-rootfs $ANDROID_HOME/build-tools/34.0.0/aapt2 ...
 > ```
 >
-> `build.sh` 里的 `QEMU` / `X86ROOT` 两个变量可以改；x86_64 主机上直接留空即可。
+> 脚本会自动检测：`uname -m` 是 `aarch64` 且 `/opt/qemu/usr/bin/qemu-x86_64-static` 存在时才套 qemu；也可以用 `JIMI_QEMU` / `JIMI_X86ROOT` 覆盖。
 
 ## 命令
 
 ```bash
 export ANDROID_HOME=$HOME/Android/Sdk
-bash app/build.sh
+bash scripts/build-apk.sh
 ```
 
 脚本依次做：
 
-1. `aapt2 compile` 把 `res/` 编译成 `res.zip`；
+1. `aapt2 compile` 把 `app/src/main/res` 编译成 `res.zip`；
 2. `aapt2 link` 生成只含资源的 `base.apk`（自动生成二进制 AndroidManifest）；
-3. `javac` 编译 `src/`；
+3. `javac` 编译 `app/src/main/java`；
 4. `d8` 把 class 转成 `classes.dex`（`--min-api 30`）；
 5. 用 python 把 `classes.dex` 塞进 `base.apk`，同时保证 `resources.arsc` 的 4 字节对齐；
 6. `apksigner` 用 `keystore.jks` 做 v2 签名（首次运行会自动 `keytool` 生成）。
 
-产物：`app/out/app.apk`。
+产物：`build/app.apk`。
 
-## 签名
+## 用 Gradle 构建（可选）
+
+根目录是标准 Android Gradle 项目，装好 Android Studio 或本地 Gradle 后：
+
+```bash
+gradle assembleRelease
+```
+
+签名通过环境变量注入（见 `app/build.gradle.kts`）：`JIMI_KEYSTORE` / `JIMI_STOREPASS` / `JIMI_KEYPASS`。
+
+## 签名（手写脚本）
 
 `keystore.jks` **不要提交**（已在 `.gitignore` 里）。首次构建会自动生成：
 
@@ -46,6 +56,8 @@ storepass / keypass: rltranslate
 ```
 
 正式发布请换成自己的密钥，并保管好——换钥匙会导致无法覆盖升级。
+
+> 本仓库不附带官方发布的 keystore。用 `scripts/build-apk.sh` 自己构建出来的 APK 会和官方 Release 的签名不同，**不能覆盖安装**官方版本，需要先卸载再装。
 
 ## 内存吃紧时
 

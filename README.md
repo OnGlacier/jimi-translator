@@ -94,8 +94,10 @@
 
 ```bash
 export ANDROID_HOME=/path/to/android-sdk
-bash app/build.sh          # 产出 app/out/app.apk
+bash scripts/build-apk.sh     # 产出 build/app.apk
 ```
+
+也可以直接用 Android Studio 打开根目录（标准 Gradle 项目，零第三方依赖）。
 
 ---
 
@@ -118,14 +120,17 @@ A：提示词明确要求公式写普通字符；如果模型还是漏出来，�
 ## 目录
 
 ```
-app/         Android 应用（Java + 手写构建脚本）
-  src/       MainActivity / 无障碍服务 / 悬浮窗 / 模型调用 / 去重
-  res/        图标、无障碍配置、字符串
-docs/        架构、提示词、构建说明
-dsh-plugin/  早期原型：同样能力的 DSH 网页插件（需 DeepSeek Harness），保留作参考
+app/                       Android 应用（标准 Gradle 布局，Java）
+  src/main/java/…          MainActivity / 无障碍服务 / 悬浮窗 / 模型调用 / 去重
+  src/main/res/            图标、无障碍配置、字符串
+  build.gradle.kts         命名空间 / 版本 / 可选环境变量签名
+scripts/build-apk.sh       不依赖 Gradle 的手写构建（aapt2 + javac + d8 + apksigner）
+docs/                      架构、提示词、构建说明
+extras/dsh-plugin/         早期 DSH 网页插件原型，保留作参考
+.github/                   CI（构建 APK + 打 tag 自动发 Release）、issue 模板
 ```
 
-`dsh-plugin/` 是同一套「读屏 → 视觉模型 → 去重 → 浮窗」逻辑的网页版实现，跑在 DeepSeek Harness 里，也能独立部署一个极简翻译页（`/rl-translator`）。它依赖 DSH 的内部服务，不建议单独使用，留作参考。
+`extras/dsh-plugin/` 是同一套「读屏 → 视觉模型 → 去重 → 浮窗」逻辑的网页版实现，跑在 DeepSeek Harness 里，也能独立部署一个极简翻译页（`/rl-translator`）。它依赖 DSH 的内部服务，不建议单独使用，留作参考。
 
 ---
 

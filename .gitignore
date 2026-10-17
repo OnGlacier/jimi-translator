@@ -1,5 +1,5 @@
 # 构建产物
-app/out/
+build/
 app/build/
 *.apk
 *.aab
