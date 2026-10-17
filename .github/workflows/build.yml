@@ -42,3 +42,22 @@ jobs:
         with:
           files: jimi-translator-${{ github.ref_name }}.apk
           generate_release_notes: true
+          body: |
+            ## 基米翻译 ${{ github.ref_name }}
+
+            读屏英译中的 Android 悬浮翻译器：只翻屏幕上**新出现**的英文，中文浮在原页上。
+
+            - 📦 **下载**：见下方 Assets 里的 `jimi-translator-${{ github.ref_name }}.apk`
+            - 📖 **说明**：https://github.com/${{ github.repository }}#readme
+            - 📝 **更新日志**：https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md
+            - 🛠 **自己构建**：https://github.com/${{ github.repository }}/blob/main/docs/BUILD.md
+
+            ### 安装
+
+            1. 允许「未知来源」安装，装上后打开 App；
+            2. 填模型 API key（默认 DeepSeek：`https://api.deepseek.com/v1` + `deepseek-flash`）；
+            3. 点「权限设置（开启无障碍服务）」→ 打开「基米翻译 · 读屏服务」；
+            4. 浮窗出现后，点「框选」圈一段，或点「自动」整屏跟读。
+
+            > ⚠️ Release 里的 APK 由 CI 签名，与本地自行构建的版本签名不同，不能互相覆盖安装。
+            

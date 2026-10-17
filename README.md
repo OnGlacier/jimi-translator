@@ -8,6 +8,10 @@
 
 ---
 
+**下载**：[最新 Release](https://github.com/OnGlacier/jimi-translator/releases/latest) · [更新日志](CHANGELOG.md) · [自己构建](docs/BUILD.md)
+
+---
+
 ## 它长什么样
 
 - 一个**可拖动的橙色猫猫圆钮**浮在屏幕上，点开是一张译文卡；
